@@ -34,17 +34,17 @@ export const SearchSection = () => {
   };
 
   return (
-    <section className="py-16 bg-nexa-bg-2 border-b border-nexa-line">
-      <div className="max-w-[1280px] mx-auto px-16">
+    <section className="py-10 sm:py-14 md:py-16 bg-nexa-bg-2 border-b border-nexa-line">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
         <motion.form
           onSubmit={handleSearch}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="bg-white rounded-[32px] shadow-nexa-lg border border-nexa-line p-2 flex items-center max-w-[900px] mx-auto"
+          className="bg-white rounded-2xl sm:rounded-[32px] shadow-nexa-lg border border-nexa-line p-2 flex flex-col sm:flex-row items-stretch sm:items-center max-w-[900px] mx-auto"
         >
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-x divide-nexa-line">
-            <div className="p-3.5 px-5">
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-nexa-line min-w-0">
+            <div className="p-3.5 sm:p-3.5 px-5 min-h-[60px] sm:min-h-0 flex flex-col justify-center">
               <label className="block text-[0.7rem] font-bold uppercase tracking-wider text-nexa-ink-3 mb-1">
                 Destination
               </label>
@@ -56,7 +56,7 @@ export const SearchSection = () => {
                 className="w-full border-none outline-none bg-transparent font-sans text-sm text-nexa-ink"
               />
             </div>
-            <div className="p-3.5 px-5">
+            <div className="p-3.5 sm:p-3.5 px-5 min-h-[60px] sm:min-h-0 flex flex-col justify-center">
               <label className="block text-[0.7rem] font-bold uppercase tracking-wider text-nexa-ink-3 mb-1">
                 Check-in
               </label>
@@ -68,7 +68,7 @@ export const SearchSection = () => {
                 className="w-full border-none outline-none bg-transparent font-sans text-sm text-nexa-ink"
               />
             </div>
-            <div className="p-3.5 px-5">
+            <div className="p-3.5 sm:p-3.5 px-5 min-h-[60px] sm:min-h-0 flex flex-col justify-center">
               <label className="block text-[0.7rem] font-bold uppercase tracking-wider text-nexa-ink-3 mb-1">
                 Check-out
               </label>
@@ -80,7 +80,7 @@ export const SearchSection = () => {
                 className="w-full border-none outline-none bg-transparent font-sans text-sm text-nexa-ink"
               />
             </div>
-            <div className="p-3.5 px-5">
+            <div className="p-3.5 sm:p-3.5 px-5 min-h-[60px] sm:min-h-0 flex flex-col justify-center">
               <label className="block text-[0.7rem] font-bold uppercase tracking-wider text-nexa-ink-3 mb-1">
                 Guests
               </label>
@@ -97,7 +97,7 @@ export const SearchSection = () => {
               </select>
             </div>
           </div>
-          <Button type="submit" size="lg" className="m-1 mx-2 shrink-0">
+          <Button type="submit" size="lg" className="m-1 mx-2 shrink-0 w-full sm:w-auto min-h-[48px]">
             🔍 Search
           </Button>
         </motion.form>

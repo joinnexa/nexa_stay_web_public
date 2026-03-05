@@ -14,11 +14,11 @@ export default function ContactPage() {
       <NavBar />
       <main className="pt-[72px]">
         <section className="bg-gradient-to-br from-nexa-primary-soft to-nexa-bg pt-[calc(72px+64px)] pb-16 border-b border-nexa-line">
-          <div className="max-w-[1280px] mx-auto px-16">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             <span className="block text-xs font-semibold tracking-[0.12em] uppercase text-nexa-primary mb-3">
               Contact
             </span>
-            <h1 className="text-4xl font-bold text-nexa-ink mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-nexa-ink mb-4">
               We&apos;re here to help
             </h1>
             <p className="max-w-[580px] text-lg">
@@ -28,7 +28,7 @@ export default function ContactPage() {
         </section>
 
         <section className="py-24">
-          <div className="max-w-[1280px] mx-auto px-16">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.3fr] gap-20">
               <div>
                 <span className="block text-xs font-semibold tracking-[0.12em] uppercase text-nexa-primary mb-4">

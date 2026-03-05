@@ -12,8 +12,8 @@ const stats = [
 
 export const StatsSection = () => {
   return (
-    <section className="bg-gradient-to-br from-nexa-primary to-nexa-primary-dark py-16">
-      <div className="max-w-[1280px] mx-auto px-16">
+    <section className="bg-gradient-to-br from-nexa-primary to-nexa-primary-dark py-12 sm:py-14 md:py-16">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
           {stats.map((stat, i) => (
             <motion.div
@@ -23,7 +23,7 @@ export const StatsSection = () => {
               viewport={{ once: true }}
               transition={{ delay: i * 0.05 }}
             >
-              <div className="font-display text-4xl font-bold text-white mb-2">
+              <div className="font-display text-3xl sm:text-4xl font-bold text-white mb-2">
                 {stat.num}
               </div>
               <div className="text-sm text-white/75">{stat.label}</div>

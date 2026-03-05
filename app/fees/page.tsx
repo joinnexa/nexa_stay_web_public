@@ -8,7 +8,7 @@ export default function FeesPage() {
       <NavBar />
       <main className="pt-[72px]">
         <section className="bg-gradient-to-br from-nexa-primary-soft to-nexa-bg pt-[calc(72px+64px)] pb-16 border-b border-nexa-line">
-          <div className="max-w-[1280px] mx-auto px-16">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             <span className="block text-xs font-semibold tracking-[0.12em] uppercase text-nexa-primary mb-3">
               Transparent Fees
             </span>
@@ -23,7 +23,7 @@ export default function FeesPage() {
         </section>
 
         <section className="py-24">
-          <div className="max-w-[1280px] mx-auto px-16">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-nexa-primary mb-3">

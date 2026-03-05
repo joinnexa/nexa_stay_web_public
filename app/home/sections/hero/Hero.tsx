@@ -9,7 +9,7 @@ export const HeroSection = () => {
   return (
     <section className="min-h-screen pt-[72px] grid grid-cols-1 md:grid-cols-2 items-center overflow-hidden relative">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_100%_50%,rgba(232,80,122,0.06)_0%,transparent_70%)] pointer-events-none" />
-      <div className="p-20 pl-16 relative z-10">
+      <div className="p-6 sm:p-10 md:p-14 lg:p-16 xl:p-20 xl:pl-16 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -23,7 +23,7 @@ export const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-4xl md:text-5xl font-bold text-nexa-ink mb-5 leading-tight"
+          className="text-3xl sm:text-4xl md:text-5xl font-bold text-nexa-ink mb-5 leading-tight"
         >
           Book stays in Morocco
           <br />
@@ -33,7 +33,7 @@ export const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-lg text-nexa-ink-3 mb-9 max-w-[460px] leading-relaxed"
+          className="text-base sm:text-lg text-nexa-ink-3 mb-9 max-w-[460px] leading-relaxed"
         >
           Verified people. Verified properties. Clear check-ins. So your trip
           feels smooth — not stressful.
@@ -71,7 +71,7 @@ export const HeroSection = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="relative w-[340px] h-[420px]"
+          className="relative w-full max-w-[340px] h-[360px] sm:h-[400px] md:h-[420px] mx-auto"
         >
           <div className="absolute inset-0 bg-white rounded-[22px] shadow-nexa-lg overflow-hidden">
             <div

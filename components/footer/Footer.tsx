@@ -4,9 +4,9 @@ import Image from "next/image";
 
 export const Footer = () => {
   return (
-    <footer className="bg-nexa-ink text-white/70 py-16">
-      <div className="max-w-[1280px] mx-auto px-16">
-        <div className="grid grid-cols-[2fr_1fr_1fr_1fr] gap-12 pb-12 border-b border-white/10">
+    <footer className="bg-nexa-ink text-white/70 py-12 sm:py-16">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-8 sm:gap-10 lg:gap-12 pb-10 sm:pb-12 border-b border-white/10">
           <div>
             <div className="flex items-center gap-2.5 mb-4">
               <div className="relative w-9 h-9 rounded-lg overflow-hidden">
@@ -14,6 +14,7 @@ export const Footer = () => {
                   src="/images/nexastays.png"
                   alt="Nexa Stays"
                   fill
+                  sizes="36px"
                   className="object-cover"
                 />
               </div>
@@ -82,9 +83,9 @@ export const Footer = () => {
             </Link>
           </div>
         </div>
-        <div className="flex justify-between items-center pt-7 text-sm">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 sm:pt-7 text-sm text-center sm:text-left">
           <p className="text-white/40">© 2026 Nexa. All rights reserved.</p>
-          <div className="flex items-center gap-1.5 text-white/50 text-sm">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-1.5 text-white/50 text-sm">
             <span className="text-nexa-primary-light font-semibold">Secured by Nexa.</span> Operated by Nexa.
           </div>
         </div>

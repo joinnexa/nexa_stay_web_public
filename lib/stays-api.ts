@@ -11,6 +11,8 @@ import type {
   StaysBooking,
   HostVerificationStatus,
   SubmitHostVerificationBody,
+  HostListingSummary,
+  CreateHostListingBody,
 } from "./stays-types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:3000/api/v1";
@@ -19,6 +21,26 @@ const client = axios.create({
   baseURL: API_BASE,
   headers: { "Content-Type": "application/json" },
 });
+
+/** Retry on 429 with backoff; show friendly message if still failing */
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1500;
+
+client.interceptors.response.use(
+  (res) => res,
+  async (err) => {
+    const config = err.config;
+    if (!config || config.__retryCount >= MAX_RETRIES) {
+      return Promise.reject(err);
+    }
+    if (err.response?.status === 429) {
+      config.__retryCount = (config.__retryCount || 0) + 1;
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * config.__retryCount));
+      return client.request(config);
+    }
+    return Promise.reject(err);
+  }
+);
 
 /** Attach JWT for authenticated requests */
 function getAuthHeaders(): Record<string, string> {
@@ -35,6 +57,9 @@ function unwrap<T>(res: { data?: unknown }): T {
 function handleError(err: unknown): never {
   if (axios.isAxiosError(err)) {
     const e = err as AxiosError<{ message?: string; error?: string }>;
+    if (e.response?.status === 429) {
+      throw new Error("Please wait a moment and try again.");
+    }
     const msg = e.response?.data?.message ?? e.response?.data?.error ?? e.message ?? "Request failed";
     throw new Error(msg);
   }
@@ -98,6 +123,58 @@ export async function getBooking(
   return unwrap<StaysBooking>(res);
 }
 
+/** Get host's listings (requires JWT, approved host) */
+export async function getHostListings(
+  token?: string | null
+): Promise<HostListingSummary[]> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const res = await client
+    .get("/stays/host/listings", { headers })
+    .catch(handleError);
+  const data = unwrap<HostListingSummary[]>(res);
+  return Array.isArray(data) ? data : [];
+}
+
+/** Create listing (requires JWT, approved host) */
+export async function createHostListing(
+  body: CreateHostListingBody,
+  token?: string | null
+): Promise<{ id: string; status: string; message: string }> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const res = await client
+    .post("/stays/host/listings", body, { headers })
+    .catch(handleError);
+  return unwrap<{ id: string; status: string; message: string }>(res);
+}
+
+/** Upload listing photo (returns asset_id) */
+export async function uploadListingPhoto(
+  file: File,
+  token?: string | null
+): Promise<{ asset_id: string }> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const form = new FormData();
+  form.append("file", file);
+  const res = await client
+    .post("/stays/host/listings/media/photo", form, { headers })
+    .catch(handleError);
+  return unwrap<{ asset_id: string }>(res);
+}
+
+/** Upload listing walkthrough video (returns asset_id) */
+export async function uploadListingWalkthrough(
+  file: File,
+  token?: string | null
+): Promise<{ asset_id: string }> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const form = new FormData();
+  form.append("file", file);
+  const res = await client
+    .post("/stays/host/listings/media/walkthrough", form, { headers })
+    .catch(handleError);
+  return unwrap<{ asset_id: string }>(res);
+}
+
 /** Get host verification status (requires JWT) */
 export async function getHostVerification(
   token?: string | null
@@ -121,11 +198,60 @@ export async function submitHostVerification(
   return unwrap<HostVerificationStatus>(res);
 }
 
+/** Upload host ID document front (requires JWT) */
+export async function uploadHostDocumentFront(
+  file: File,
+  token?: string | null
+): Promise<{ asset_id: string }> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const form = new FormData();
+  form.append("file", file);
+  const res = await client
+    .post("/stays/host/verification/documents/front", form, { headers })
+    .catch(handleError);
+  return unwrap<{ asset_id: string }>(res);
+}
+
+/** Upload host ID document back (requires JWT) */
+export async function uploadHostDocumentBack(
+  file: File,
+  token?: string | null
+): Promise<{ asset_id: string }> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const form = new FormData();
+  form.append("file", file);
+  const res = await client
+    .post("/stays/host/verification/documents/back", form, { headers })
+    .catch(handleError);
+  return unwrap<{ asset_id: string }>(res);
+}
+
+/** Upload host selfie (requires JWT) */
+export async function uploadHostSelfie(
+  file: File,
+  token?: string | null
+): Promise<{ asset_id: string }> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const form = new FormData();
+  form.append("file", file);
+  const res = await client
+    .post("/stays/host/verification/documents/selfie", form, { headers })
+    .catch(handleError);
+  return unwrap<{ asset_id: string }>(res);
+}
+
 export const staysApi = {
   searchListings,
   getListing,
   createBooking,
   getBooking,
   getHostVerification,
+  getHostListings,
+  createHostListing,
+  uploadListingPhoto,
+  uploadListingWalkthrough,
   submitHostVerification,
+  uploadHostDocumentFront,
+  uploadHostDocumentBack,
+  uploadHostSelfie,
 };

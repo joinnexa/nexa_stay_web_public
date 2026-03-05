@@ -23,7 +23,7 @@ export function LegalLayout({
       <NavBar />
       <main className="pt-[72px]">
         <section className="bg-gradient-to-br from-nexa-primary-soft to-nexa-bg pt-[calc(72px+64px)] pb-16 border-b border-nexa-line">
-          <div className="max-w-[1280px] mx-auto px-16">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             <span className="block text-xs font-semibold tracking-[0.12em] uppercase text-nexa-primary mb-3">
               Legal
             </span>
@@ -33,7 +33,7 @@ export function LegalLayout({
         </section>
 
         <section className="py-14">
-          <div className="max-w-[1280px] mx-auto px-16 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-0">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-0">
             <aside className="lg:sticky lg:top-[calc(72px+32px)] lg:self-start h-fit pr-10 border-r border-nexa-line pt-2 lg:mb-0 mb-10">
               <h4 className="text-xs font-bold uppercase tracking-wider text-nexa-ink-4 mb-3.5">
                 Sections

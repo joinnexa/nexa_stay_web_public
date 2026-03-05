@@ -28,18 +28,18 @@ const whyCards = [
 
 export const WhyNexaSection = () => {
   return (
-    <section className="py-24">
-      <div className="max-w-[1280px] mx-auto px-16">
+    <section className="py-16 sm:py-20 md:py-24">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-14"
+          className="text-center mb-10 sm:mb-14"
         >
           <span className="block text-xs font-semibold tracking-[0.12em] uppercase text-nexa-primary mb-3">
             Why Nexa Stays
           </span>
-          <h2 className="text-3xl md:text-4xl font-semibold text-nexa-ink mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-nexa-ink mb-4">
             Because &quot;booking&quot; shouldn&apos;t feel like gambling.
           </h2>
           <p className="max-w-[520px] mx-auto text-base">

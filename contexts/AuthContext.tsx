@@ -20,6 +20,10 @@ export interface User {
   email?: string;
   kyc_status?: string;
   account_type?: string;
+  profile_photo_url?: string | null;
+  city?: string;
+  date_of_birth?: string;
+  nationality?: string;
   [key: string]: unknown;
 }
 
@@ -33,6 +37,8 @@ interface AuthContextValue {
   setAuthJwt: (accessToken: string) => void;
   /** Set OTP session token for registration flow */
   setAuthOtpSession: (otpSessionToken: string) => void;
+  /** Refresh user from API (e.g. after profile/photo update) */
+  refreshUser: () => Promise<void>;
   logout: () => void;
   /** For backward compat during migration */
   userId: string | null;
@@ -46,12 +52,16 @@ async function fetchCurrentUser(
   baseUrl: string,
   jwt: string
 ): Promise<User | null> {
-  const res = await fetch(`${baseUrl}/users/me`, {
-    headers: { Authorization: `Bearer ${jwt}` },
-  });
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data?.id ? data : null;
+  try {
+    const res = await fetch(`${baseUrl}/users/me`, {
+      headers: { Authorization: `Bearer ${jwt}` },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.id ? data : null;
+  } catch {
+    return null;
+  }
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -118,6 +128,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
+  const refreshUser = useCallback(async () => {
+    const jwt = tokenType === "jwt" ? token : null;
+    if (jwt) {
+      const u = await fetchCurrentUser(apiBase, jwt);
+      setUser(u);
+    }
+  }, [apiBase, token, tokenType]);
+
   /** Legacy: treats token as JWT if userId looks like UUID, else OTP session */
   const setAuth = useCallback((t: string, userId: string) => {
     const looksLikeUuid =
@@ -139,6 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: tokenType === "jwt" && !!token,
     setAuthJwt,
     setAuthOtpSession,
+    refreshUser,
     logout,
     userId: user?.id ?? null,
     setAuth,

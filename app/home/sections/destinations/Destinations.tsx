@@ -41,8 +41,8 @@ const destinations = [
 
 export const DestinationsSection = () => {
   return (
-    <section className="py-24">
-      <div className="max-w-[1280px] mx-auto px-16">
+    <section className="py-16 sm:py-20 md:py-24">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -52,7 +52,7 @@ export const DestinationsSection = () => {
           <span className="block text-xs font-semibold tracking-[0.12em] uppercase text-nexa-primary mb-3">
             Destinations
           </span>
-          <h2 className="text-3xl md:text-4xl font-semibold text-nexa-ink">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-nexa-ink">
             Where do you want to stay next?
           </h2>
         </motion.div>
@@ -74,6 +74,7 @@ export const DestinationsSection = () => {
                     src={dest.img}
                     alt={dest.title}
                     fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-nexa-ink/65 to-transparent" />

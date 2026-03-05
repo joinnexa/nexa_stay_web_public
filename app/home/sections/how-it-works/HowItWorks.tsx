@@ -25,9 +25,9 @@ const steps = [
 
 export const HowItWorksSection = () => {
   return (
-    <section id="how" className="py-24 bg-nexa-bg-2">
-      <div className="max-w-[1280px] mx-auto px-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+    <section id="how" className="py-16 sm:py-20 md:py-24 bg-nexa-bg-2">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -37,7 +37,7 @@ export const HowItWorksSection = () => {
               How It Works
             </span>
             <div className="w-12 h-0.5 bg-gradient-to-r from-nexa-primary to-nexa-accent rounded-sm my-5" />
-            <h2 className="text-3xl font-semibold text-nexa-ink mb-4">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-nexa-ink mb-4">
               Simple to book.
               <br />
               Serious about trust.
@@ -69,7 +69,7 @@ export const HowItWorksSection = () => {
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="rounded-[32px] overflow-hidden shadow-nexa-lg h-[480px] relative"
+            className="rounded-2xl sm:rounded-[32px] overflow-hidden shadow-nexa-lg h-[320px] sm:h-[400px] lg:h-[480px] relative min-h-[280px]"
           >
             <div
               className="absolute inset-0 bg-cover bg-center"

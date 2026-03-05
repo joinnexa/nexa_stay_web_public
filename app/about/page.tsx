@@ -11,13 +11,13 @@ export default function AboutPage() {
       <NavBar />
       <main>
         <section className="min-h-[60vh] flex items-center pt-[72px] bg-gradient-to-br from-nexa-primary-soft to-nexa-bg">
-          <div className="max-w-[1280px] mx-auto px-16">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             <div className="max-w-[700px]">
               <span className="block text-xs font-semibold tracking-[0.12em] uppercase text-nexa-primary mb-4">
                 Our Story
               </span>
               <div className="w-12 h-0.5 bg-gradient-to-r from-nexa-primary to-nexa-accent rounded-sm my-4" />
-              <h1 className="text-4xl font-bold text-nexa-ink mb-5">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-nexa-ink mb-5">
                 We built Nexa Stays because booking in Morocco shouldn&apos;t feel
                 risky.
               </h1>
@@ -30,7 +30,7 @@ export default function AboutPage() {
         </section>
 
         <section className="py-24">
-          <div className="max-w-[1280px] mx-auto px-16">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
               <div>
                 <span className="block text-xs font-semibold tracking-[0.12em] uppercase text-nexa-primary mb-4">
@@ -86,7 +86,7 @@ export default function AboutPage() {
         </section>
 
         <section className="py-24 bg-nexa-bg-2">
-          <div className="max-w-[1280px] mx-auto px-16">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             <div className="text-center mb-14">
               <span className="block text-xs font-semibold tracking-[0.12em] uppercase text-nexa-primary mb-3">
                 Our Approach
@@ -135,8 +135,8 @@ export default function AboutPage() {
         </section>
 
         <section className="py-24">
-          <div className="max-w-[1280px] mx-auto px-16">
-            <div className="bg-gradient-to-br from-nexa-ink to-nexa-ink-2 rounded-[32px] p-16 px-16 lg:px-20 grid grid-cols-1 lg:grid-cols-2 gap-16">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+            <div className="bg-gradient-to-br from-nexa-ink to-nexa-ink-2 rounded-2xl sm:rounded-[32px] p-8 sm:p-12 md:p-16 lg:px-20 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
               <div>
                 <span className="text-xs font-semibold tracking-[0.12em] uppercase text-nexa-primary-light block mb-4">
                   Privacy by Design
@@ -186,13 +186,14 @@ export default function AboutPage() {
         </section>
 
         <section className="py-24 bg-nexa-bg-2">
-          <div className="max-w-[1280px] mx-auto px-16">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
               <div className="relative rounded-[32px] overflow-hidden shadow-nexa-lg aspect-[4/3]">
                 <Image
                   src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=700&q=80"
                   alt="Stay"
                   fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover"
                 />
               </div>
@@ -230,7 +231,7 @@ export default function AboutPage() {
         </section>
 
         <section className="py-24">
-          <div className="max-w-[1280px] mx-auto px-16">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             <div className="bg-nexa-primary rounded-[32px] p-14 px-18 flex flex-col lg:flex-row items-center justify-between gap-12">
               <div>
                 <h2 className="text-2xl font-semibold text-white mb-3">

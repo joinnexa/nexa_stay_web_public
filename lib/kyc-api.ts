@@ -154,6 +154,38 @@ export async function uploadDocument(
   return (unwrapResponse(res) ?? res.data) ?? { url: "" };
 }
 
+/** Change phone number - requires OTP verification on current and new phone. */
+export async function changePhone(
+  data: { current_otp: string; new_phone_number: string; new_otp: string },
+  getJwt: () => string | null
+): Promise<{ phone_number: string }> {
+  const res = await jsonClient.post("/users/me/change-phone", data, {
+    headers: getAuthHeaders(getJwt),
+  });
+  return (unwrapResponse(res) ?? res.data) ?? { phone_number: data.new_phone_number };
+}
+
+/** Upload profile photo - requires JWT. Max 5MB, jpg/png. */
+export async function uploadProfilePhoto(
+  file: File,
+  getJwt: () => string | null
+): Promise<{ profile_photo_url: string }> {
+  const vr = validateImageFile(file);
+  if (!vr.valid) throw new Error(vr.error);
+  if (file.size > 5 * 1024 * 1024) throw new Error("Photo must be under 5MB");
+
+  const form = new FormData();
+  form.append("file", file);
+
+  const res = await axios.post(`${API_BASE}/users/me/profile-photo`, form, {
+    headers: {
+      ...getAuthHeaders(getJwt),
+    },
+    timeout: 30000,
+  });
+  return (unwrapResponse(res) ?? res.data) ?? { profile_photo_url: "" };
+}
+
 /** Upload selfie - validates file first */
 export async function uploadSelfie(
   file: File,

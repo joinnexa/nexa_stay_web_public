@@ -18,9 +18,9 @@ const buttonVariants = cva(
           "bg-white text-nexa-primary shadow-nexa-md hover:shadow-nexa-lg hover:-translate-y-0.5",
       },
       size: {
-        default: "h-11 px-6 py-3",
-        sm: "h-9 px-4 text-xs rounded-lg",
-        lg: "h-12 px-8 text-base rounded-[18px]",
+        default: "h-11 min-h-[44px] px-6 py-3",
+        sm: "h-9 min-h-[44px] sm:min-h-0 sm:h-9 px-4 text-xs rounded-lg",
+        lg: "h-12 min-h-[48px] px-8 text-base rounded-[18px]",
       },
     },
     defaultVariants: {

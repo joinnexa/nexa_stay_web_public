@@ -110,7 +110,7 @@ export default function LoginPage() {
     <>
       <NavBar />
       <main className="pt-[72px] min-h-screen grid grid-cols-1 lg:grid-cols-2">
-        <div className="bg-gradient-to-br from-nexa-primary to-nexa-primary-dark flex items-center justify-center p-20 pl-16 relative overflow-hidden min-h-[calc(100vh-72px)]">
+        <div className="bg-gradient-to-br from-nexa-primary to-nexa-primary-dark flex items-center justify-center p-6 sm:p-10 md:p-14 lg:p-16 xl:p-20 xl:pl-16 relative overflow-hidden min-h-[calc(100vh-72px)]">
           <div className="absolute top-0 right-0 w-[400px] h-[400px] rounded-full bg-white/5 -translate-y-1/2 translate-x-1/2" />
           <div className="relative z-10 max-w-[400px]">
             <Link
@@ -122,6 +122,7 @@ export default function LoginPage() {
                   src="/images/nexastays.png"
                   alt="Nexa Stays"
                   fill
+                  sizes="120px"
                   className="object-cover"
                 />
               </div>
@@ -129,7 +130,7 @@ export default function LoginPage() {
                 Nexa Stays
               </span>
             </Link>
-            <h2 className="text-white text-2xl font-semibold mb-4">
+            <h2 className="text-white text-xl sm:text-2xl font-semibold mb-4">
               Sign in with your phone
             </h2>
             <p className="text-white/75 text-base mb-10">
@@ -155,11 +156,11 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="bg-nexa-bg flex items-center justify-center p-10 pl-16">
+        <div className="bg-nexa-bg flex items-center justify-center p-6 sm:p-8 md:p-10 lg:p-10 lg:pl-16">
           <div className="w-full max-w-[400px]">
             {step === "phone" && (
               <form onSubmit={handleSendOtp}>
-                <h2 className="text-2xl font-semibold mb-2">Enter your phone</h2>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-2">Enter your phone</h2>
                 <p className="text-nexa-ink-3 text-sm mb-6">
                   We&apos;ll send a 6-digit code to verify your number.
                 </p>
@@ -189,7 +190,7 @@ export default function LoginPage() {
 
             {step === "otp" && (
               <form onSubmit={handleVerifyOtp}>
-                <h2 className="text-2xl font-semibold mb-2">Enter the code</h2>
+                <h2 className="text-xl sm:text-2xl font-semibold mb-2">Enter the code</h2>
                 <p className="text-nexa-ink-3 text-sm mb-6">
                   We sent a 6-digit code to {phone}
                 </p>

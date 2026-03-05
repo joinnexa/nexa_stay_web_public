@@ -14,19 +14,19 @@ const bullets = [
 
 export const HostCtaSection = () => {
   return (
-    <section className="py-24">
-      <div className="max-w-[1280px] mx-auto px-16">
+    <section className="py-16 sm:py-20 md:py-24">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="bg-gradient-to-br from-nexa-ink to-nexa-ink-2 rounded-[32px] p-18 px-20 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-12 items-center"
+          className="bg-gradient-to-br from-nexa-ink to-nexa-ink-2 rounded-2xl sm:rounded-[32px] p-8 sm:p-12 md:p-16 lg:p-20 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 lg:gap-12 items-center"
         >
           <div>
             <span className="text-xs font-semibold tracking-[0.12em] uppercase text-nexa-primary-light mb-3 block">
               For Property Owners
             </span>
-            <h2 className="text-3xl font-semibold text-white mb-3">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-white mb-3">
               List your property. Keep more of your revenue.
             </h2>
             <p className="text-white/65 max-w-[500px] mb-6">

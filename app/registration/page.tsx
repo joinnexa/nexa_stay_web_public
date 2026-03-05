@@ -196,6 +196,7 @@ export default function RegistrationPage() {
                   src="/images/nexastays.png"
                   alt="Nexa Stays"
                   fill
+                  sizes="120px"
                   className="object-cover"
                 />
               </div>

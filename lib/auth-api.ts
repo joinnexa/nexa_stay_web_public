@@ -12,6 +12,28 @@ const client = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+/** Retry on 429 once; always show friendly message instead of raw ThrottlerException */
+client.interceptors.response.use(
+  (res) => res,
+  async (err) => {
+    const config = err.config as { __retryCount?: number } | undefined;
+    const is429 = err.response?.status === 429;
+    if (is429 && config && (config.__retryCount ?? 0) < 1) {
+      config.__retryCount = (config.__retryCount ?? 0) + 1;
+      await new Promise((r) => setTimeout(r, 2000));
+      return client.request(config);
+    }
+    if (is429) {
+      const raw = err.response?.data?.message;
+      err.message =
+        raw && !String(raw).toLowerCase().includes("throttler")
+          ? raw
+          : "Too many requests. Please wait a moment and try again.";
+    }
+    return Promise.reject(err);
+  }
+);
+
 /** Send OTP to phone */
 export async function sendOtp(phone_number: string): Promise<{ sent: boolean }> {
   const res = await client.post("/auth/otp/send", { phone_number });

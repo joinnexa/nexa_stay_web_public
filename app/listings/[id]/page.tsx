@@ -108,17 +108,17 @@ export default function ListingDetailPage() {
     <>
       <NavBar />
       <main className="pt-[72px] min-h-screen">
-        <div className="max-w-[1280px] mx-auto px-6 py-8">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <Link href="/listings" className="text-nexa-primary hover:underline text-sm mb-6 inline-block">
             ← Back to Listings
           </Link>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <div className="relative h-[400px] rounded-[22px] overflow-hidden mb-6">
-                <Image src={placeholderImg} alt={listing.title} fill className="object-cover" />
+              <div className="relative min-h-[280px] h-[300px] sm:h-[360px] md:h-[400px] rounded-2xl sm:rounded-[22px] overflow-hidden mb-6">
+                <Image src={placeholderImg} alt={listing.title} fill sizes="(max-width: 1024px) 100vw, 66vw" className="object-cover" />
               </div>
-              <h1 className="text-2xl font-bold text-nexa-ink mb-2">{listing.title}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-nexa-ink mb-2">{listing.title}</h1>
               <p className="text-nexa-ink-4 mb-4">{listing.city} · {listing.listing_type}</p>
               {listing.description && (
                 <p className="text-nexa-ink-3 mb-6">{listing.description}</p>

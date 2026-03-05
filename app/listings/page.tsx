@@ -6,6 +6,7 @@ import Link from "next/link";
 import { NavBar } from "@/components/navbar/NavBar";
 import { Footer } from "@/components/footer/Footer";
 import { Button } from "@/components/ui/button";
+import { SlidersHorizontal, X } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { searchListings } from "@/lib/stays-api";
@@ -30,7 +31,7 @@ function ListingCard({ listing }: { listing: StaysListing }) {
     <div className="bg-white rounded-[22px] border border-nexa-line overflow-hidden transition-all hover:-translate-y-1 hover:shadow-nexa-md group">
       <Link href={`/listings/${listing.id}`}>
         <div className="relative h-[180px]">
-          <Image src={placeholderImg} alt={listing.title} fill className="object-cover" />
+          <Image src={placeholderImg} alt={listing.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
           <div className="absolute top-2.5 left-2.5 right-2.5 flex justify-between">
             <span className="inline-flex px-3 py-1 rounded-full text-[0.72rem] font-semibold bg-nexa-ink text-white">
               {listing.listing_type}
@@ -80,6 +81,7 @@ export default function ListingsPage() {
     searchParams.get("instant_booking_only") === "true"
   );
   const [selectedType, setSelectedType] = useState<string>("Apartment");
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const city = searchParams.get("city") || "";
   const checkin = searchParams.get("checkin_date") || "";
@@ -143,7 +145,7 @@ export default function ListingsPage() {
       <NavBar />
       <main className="pt-[72px] min-h-screen">
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr]">
-          <aside className="bg-white border-r border-nexa-line p-7 px-6 sticky top-[72px] h-[calc(100vh-72px)] overflow-y-auto">
+          <aside className="hidden lg:block bg-white border-r border-nexa-line p-7 px-6 sticky top-[72px] h-[calc(100vh-72px)] overflow-y-auto">
             <h3 className="mb-5">Filters</h3>
             <div className="mb-7">
               <h4 className="text-[0.78rem] font-bold uppercase tracking-wider text-nexa-ink-3 mb-3.5">
@@ -192,18 +194,25 @@ export default function ListingsPage() {
           </aside>
 
           <div className="bg-nexa-bg">
-            <div className="bg-white border-b border-nexa-line py-4 px-8 flex items-center gap-4 sticky top-[72px] z-10">
-              <div className="flex-1 bg-nexa-bg-2 border border-nexa-line rounded-full py-2.5 px-5 flex items-center gap-2 text-sm text-nexa-ink-3">
-                🔍 <span>{searchSummary || "Search stays"}</span>
+            <div className="bg-white border-b border-nexa-line py-3 sm:py-4 px-4 sm:px-6 md:px-8 flex flex-wrap items-center gap-3 sm:gap-4 sticky top-[72px] z-10">
+              <div className="flex-1 min-w-0 bg-nexa-bg-2 border border-nexa-line rounded-full py-2.5 px-4 sm:px-5 flex items-center gap-2 text-sm text-nexa-ink-3">
+                🔍 <span className="truncate">{searchSummary || "Search stays"}</span>
               </div>
-              <span className="text-[0.8rem] text-nexa-ink-4 whitespace-nowrap">
+              <button
+                onClick={() => setMobileFiltersOpen(true)}
+                className="lg:hidden flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-full border border-nexa-line hover:border-nexa-primary text-sm font-medium"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+              </button>
+              <span className="text-[0.8rem] text-nexa-ink-4 whitespace-nowrap hidden sm:inline">
                 {isLoading ? "Loading…" : `${displayListings.length} stays found`}
               </span>
             </div>
 
-            <div className="p-7 px-8">
-              <div className="bg-gradient-to-br from-nexa-ink to-nexa-ink-2 rounded-[32px] p-9 px-10 mb-7">
-                <h1 className="text-white text-2xl font-semibold mb-2">
+            <div className="p-4 sm:p-6 md:p-7 md:px-8">
+              <div className="bg-gradient-to-br from-nexa-ink to-nexa-ink-2 rounded-2xl sm:rounded-[32px] p-6 sm:p-8 md:p-9 md:px-10 mb-6 sm:mb-7">
+                <h1 className="text-white text-xl sm:text-2xl font-semibold mb-2">
                   Stays in Morocco — verified and ready.
                 </h1>
                 <p className="text-white/65 text-sm max-w-[500px] mb-4">
@@ -283,6 +292,76 @@ export default function ListingsPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Mobile filters drawer */}
+        <div
+          className={cn(
+            "fixed inset-0 z-50 lg:hidden transition-opacity duration-300",
+            mobileFiltersOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          )}
+          aria-hidden={!mobileFiltersOpen}
+        >
+          <div className="absolute inset-0 bg-nexa-ink/40" onClick={() => setMobileFiltersOpen(false)} />
+          <div
+            className={cn(
+              "absolute bottom-0 left-0 right-0 max-h-[80vh] bg-white rounded-t-2xl p-6 overflow-y-auto transition-transform duration-300 shadow-xl",
+              mobileFiltersOpen ? "translate-y-0" : "translate-y-full"
+            )}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold">Filters</h3>
+              <button
+                onClick={() => setMobileFiltersOpen(false)}
+                className="flex items-center justify-center w-11 h-11 min-h-[44px] rounded-lg hover:bg-nexa-bg-2"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="mb-7">
+              <h4 className="text-[0.78rem] font-bold uppercase tracking-wider text-nexa-ink-3 mb-3.5">Trust</h4>
+              <label
+                className={cn(
+                  "flex items-center justify-between py-3 px-4 rounded-xl border cursor-pointer text-sm mb-2 transition-all min-h-[44px]",
+                  verifiedOnly ? "border-nexa-primary text-nexa-primary bg-nexa-primary-soft" : "border-nexa-line text-nexa-ink-3"
+                )}
+                onClick={() => refreshWithFilters(!verifiedOnly, undefined)}
+              >
+                <span>🎬 Verified Walkthrough only</span>
+                <input type="checkbox" checked={verifiedOnly} readOnly className="accent-nexa-primary" />
+              </label>
+              <label
+                className={cn(
+                  "flex items-center justify-between py-3 px-4 rounded-xl border cursor-pointer text-sm transition-all min-h-[44px]",
+                  instantOnly ? "border-nexa-primary text-nexa-primary bg-nexa-primary-soft" : "border-nexa-line text-nexa-ink-3"
+                )}
+                onClick={() => refreshWithFilters(undefined, !instantOnly)}
+              >
+                <span>⚡ Instant Booking</span>
+                <input type="checkbox" checked={instantOnly} readOnly className="accent-nexa-primary" />
+              </label>
+            </div>
+            <div className="mb-6">
+              <h4 className="text-[0.78rem] font-bold uppercase tracking-wider text-nexa-ink-3 mb-3.5">Property Type</h4>
+              <div className="flex flex-wrap gap-2">
+                {["all", "APARTMENT", "HOTEL", "RIAD", "VILLA"].map((type) => (
+                  <span
+                    key={type}
+                    onClick={() => { setSelectedType(type); setMobileFiltersOpen(false); }}
+                    className={cn(
+                      "py-2.5 px-4 rounded-full text-sm border cursor-pointer transition-all min-h-[44px] flex items-center",
+                      selectedType === type ? "border-nexa-primary text-nexa-primary bg-nexa-primary-soft" : "border-nexa-line text-nexa-ink-3"
+                    )}
+                  >
+                    {type === "all" ? "All" : type.charAt(0) + type.slice(1).toLowerCase()}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <Button onClick={() => setMobileFiltersOpen(false)} className="w-full">
+              Apply Filters
+            </Button>
           </div>
         </div>
       </main>

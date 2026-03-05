@@ -88,9 +88,65 @@ export interface HostVerificationStatus {
 }
 
 export interface SubmitHostVerificationBody {
-  document_type: string;
+  document_type?: string;
   document_number_hash?: string;
   document_front_asset_id?: string;
   document_back_asset_id?: string;
   selfie_asset_id?: string;
+  /** Use existing approved KYC identity (name, phone, email, DOB) - skips document upload */
+  use_existing_kyc?: boolean;
+}
+
+export interface HostListingSummary {
+  id: string;
+  title: string;
+  listing_type: string;
+  city: string;
+  status: string;
+  description?: string | null;
+  rate_plan?: {
+    base_price: number;
+    weekend_price?: number | null;
+    cleaning_fee: number;
+    currency: string;
+  } | null;
+  rules?: {
+    max_guests?: number;
+    pets_policy?: string | null;
+    amenities?: string[] | null;
+  } | null;
+  created_at: string;
+}
+
+export interface CreateHostListingBody {
+  title: string;
+  listing_type: "APARTMENT" | "HOTEL" | "RIAD" | "VILLA";
+  city: string;
+  address?: string;
+  description?: string;
+  checkin_time?: string;
+  checkout_time?: string;
+  instant_booking?: boolean;
+  rules?: {
+    pets_policy?: "ALLOWED" | "DOGS_CATS" | "NO";
+    smoking_policy?: "ALLOWED" | "NOT_ALLOWED";
+    quiet_hours?: boolean;
+    couples_welcome?: boolean;
+    max_guests?: number;
+    amenities?: string[];
+    cancellation_policy?: "FLEXIBLE" | "MODERATE" | "STRICT";
+  };
+  rate_plan: {
+    currency?: string;
+    base_price: number;
+    weekend_price?: number;
+    cleaning_fee?: number;
+    deposit_policy_text?: string;
+  };
+  check_in_contact: {
+    full_name: string;
+    phone: string;
+    role: "OWNER" | "CO_HOST" | "AGENT";
+  };
+  media: { asset_id: string; kind: "PHOTO" | "WALKTHROUGH"; sort_order?: number }[];
 }
