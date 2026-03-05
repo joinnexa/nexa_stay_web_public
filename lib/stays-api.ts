@@ -22,6 +22,14 @@ const client = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// For FormData uploads, remove Content-Type so the browser sets multipart/form-data with boundary.
+client.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
+  }
+  return config;
+});
+
 /** Retry on 429 with backoff; show friendly message if still failing */
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1500;

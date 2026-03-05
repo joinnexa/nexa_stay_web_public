@@ -21,7 +21,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { Menu } from "lucide-react";
 
-const hostSteps = [
+const hostStepsFull = [
   "Host Type",
   "Create Account",
   "Confirm Contact",
@@ -36,8 +36,23 @@ const hostSteps = [
   "Submit Listing",
 ];
 
-const progressWidths: Record<number, number> = {
+/** For verified hosts adding another listing: skip account/verification, only listing details + media */
+const hostStepsAddListing = [
+  "Property Basics",
+  "Description & Rules",
+  "Pricing",
+  "Check-in Contact",
+  "Photos",
+  "Walkthrough Video",
+  "Submit Listing",
+];
+
+const progressWidthsFull: Record<number, number> = {
   1: 8, 2: 16, 3: 25, 4: 33, 5: 41, 6: 50, 7: 58, 8: 66, 9: 75, 10: 83, 11: 91, 12: 100,
+};
+
+const progressWidthsAddListing: Record<number, number> = {
+  1: 14, 2: 28, 3: 42, 4: 57, 5: 71, 6: 85, 7: 100,
 };
 
 function HostVerificationStep({
@@ -286,6 +301,28 @@ export default function HostPage() {
   const [docBackLoading, setDocBackLoading] = useState(false);
   const [selfieLoading, setSelfieLoading] = useState(false);
   const [mobileStepsOpen, setMobileStepsOpen] = useState(false);
+  const [addListingOnlyChecked, setAddListingOnlyChecked] = useState(false);
+
+  // Load host status on mount to detect "add listing only" flow (verified host adding another listing)
+  useEffect(() => {
+    if (!isAuthenticated || !token) {
+      setAddListingOnlyChecked(true);
+      return;
+    }
+    setHostLoading(true);
+    getHostVerification(token)
+      .then((s) => {
+        setHostStatus(s);
+        if (s.status === "APPROVED" || s.status === "PENDING") {
+          setStep(1); // Start at Property Basics
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setHostLoading(false);
+        setAddListingOnlyChecked(true);
+      });
+  }, [isAuthenticated, token]);
 
   // Step 3: Confirm Contact
   const [smsCode, setSmsCode] = useState("");
@@ -293,6 +330,7 @@ export default function HostPage() {
 
   // Step 6: Property Basics
   const PROPERTY_TYPES = ["Apartment", "Villa", "Hotel", "Full house", "Studio", "Guesthouse", "Riad", "House", "Chalet", "Other"] as const;
+  const MOROCCO_CITIES = ["Agadir", "Casablanca", "Chefchaouen", "Essaouira", "Fes", "Marrakech", "Meknes", "Ouarzazate", "Rabat", "Tangier", "Taroudant"] as const;
   const [propertyName, setPropertyName] = useState("");
   const [propertyType, setPropertyType] = useState<string>("Apartment");
   const [propertyCity, setPropertyCity] = useState("");
@@ -415,18 +453,25 @@ export default function HostPage() {
     }
   };
 
+  const addListingOnly = (hostStatus?.status === "APPROVED" || hostStatus?.status === "PENDING") && addListingOnlyChecked;
+  const hostSteps = addListingOnly ? hostStepsAddListing : hostStepsFull;
+  const totalSteps = addListingOnly ? 7 : 12;
+  const progressWidths = addListingOnly ? progressWidthsAddListing : progressWidthsFull;
+  /** Maps current step to full-flow step for content rendering: add-listing step 1 = Property Basics (full 6), etc. */
+  const contentStep = addListingOnly ? step + 5 : step;
+
   const stepsContent = (
     <>
       <Link href="/" className="flex items-center gap-2.5 mb-6 lg:mb-10 cursor-pointer hover:opacity-90">
         <div className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0">
           <Image src="/images/nexastays.png" alt="Nexa Stays" fill sizes="36px" className="object-cover" />
         </div>
-        <span className="font-display text-xl font-bold text-white">Host Setup</span>
+        <span className="font-display text-xl font-bold text-white">{addListingOnly ? "Add Listing" : "Host Setup"}</span>
       </Link>
       <div className="mb-6 lg:mb-8">
         <div className="text-xs font-bold uppercase tracking-wider text-white/40 mb-3">Progress</div>
         <div className="h-1 bg-white/15 rounded-sm">
-          <div className="h-full rounded-sm bg-gradient-to-r from-nexa-primary to-nexa-primary-light transition-all duration-400" style={{ width: `${progressWidths[step]}%` }} />
+          <div className="h-full rounded-sm bg-gradient-to-r from-nexa-primary to-nexa-primary-light transition-all duration-400" style={{ width: `${progressWidths[step] ?? 0}%` }} />
         </div>
       </div>
       <nav className="flex flex-col gap-1.5">
@@ -469,7 +514,7 @@ export default function HostPage() {
             className="flex items-center gap-2 px-5 py-3 min-h-[48px] rounded-full bg-nexa-ink text-white shadow-lg font-semibold text-sm"
           >
             <Menu className="h-4 w-4" />
-            Step {step} of 12
+            Step {step} of {totalSteps}
           </button>
         </div>
 
@@ -494,10 +539,13 @@ export default function HostPage() {
 
         <div className="bg-nexa-bg py-8 sm:py-10 lg:py-12 px-4 sm:px-6 md:px-10 lg:px-20 pb-20 lg:pb-16">
           <div className="max-w-[600px]">
-            {step === 1 && (
+            {!addListingOnlyChecked && token && (
+              <div className="py-12 text-center text-nexa-ink-4">Loading…</div>
+            )}
+            {addListingOnlyChecked && contentStep === 1 && (
               <div>
                 <span className="text-xs font-semibold tracking-[0.12em] uppercase text-nexa-primary">
-                  Step 1 of 12
+                  Step 1 of {totalSteps}
                 </span>
                 <h2 className="text-2xl font-semibold mt-2 mb-2">
                   Become a Host on Nexa Stays
@@ -539,10 +587,10 @@ export default function HostPage() {
               </div>
             )}
 
-            {step === 2 && (
+            {contentStep === 2 && (
               <div>
                 <span className="text-xs font-semibold uppercase text-nexa-primary">
-                  Step 2 of 12
+                  Step 2 of {totalSteps}
                 </span>
                 <h2 className="text-2xl font-semibold mt-2 mb-2">
                   Create your host account
@@ -598,9 +646,9 @@ export default function HostPage() {
               </div>
             )}
 
-            {step === 3 && (
+            {contentStep === 3 && (
               <div>
-                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 3 of 12</span>
+                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 3 of {totalSteps}</span>
                 <h2 className="text-2xl font-semibold mt-2 mb-2">Confirm Contact</h2>
                 <p className="text-nexa-ink-3 mb-6">We&apos;ll send a code to your phone and email. Enter both to verify your contact details.</p>
                 <div className="space-y-4 mb-6">
@@ -635,7 +683,7 @@ export default function HostPage() {
               </div>
             )}
 
-            {step === 4 && (
+            {contentStep === 4 && (
               <HostVerificationStep
                 token={token}
                 isAuthenticated={isAuthenticated}
@@ -736,9 +784,9 @@ export default function HostPage() {
               />
             )}
 
-            {step === 5 && (
+            {contentStep === 5 && (
               <div>
-                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 5 of 12</span>
+                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 5 of {totalSteps}</span>
                 <h2 className="text-2xl font-semibold mt-2 mb-2">Verification Submitted</h2>
                 <p className="text-nexa-ink-3 mb-6">Your identity verification has been submitted. We&apos;ll review it shortly.</p>
                 <div className="space-y-4 mb-6">
@@ -767,9 +815,9 @@ export default function HostPage() {
               </div>
             )}
 
-            {step === 6 && (
+            {contentStep === 6 && (
               <div>
-                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 6 of 12</span>
+                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 6 of {totalSteps}</span>
                 <h2 className="text-2xl font-semibold mt-2 mb-2">Property Basics</h2>
                 <p className="text-nexa-ink-3 mb-6">Tell us about your property.</p>
                 <div className="space-y-4 mb-6">
@@ -787,7 +835,12 @@ export default function HostPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-nexa-ink mb-1">City *</label>
-                    <Input value={propertyCity} onChange={(e) => setPropertyCity(e.target.value)} placeholder="e.g. Marrakech" required />
+                    <select value={propertyCity} onChange={(e) => setPropertyCity(e.target.value)} className="w-full rounded-lg border border-nexa-ink-4 px-3 py-2 text-sm">
+                      <option value="">Select city</option>
+                      {MOROCCO_CITIES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-nexa-ink mb-1">Full address *</label>
@@ -795,15 +848,19 @@ export default function HostPage() {
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="ghost" onClick={() => setStep(5)}>← Back</Button>
-                  <Button onClick={() => setStep(7)} disabled={!propertyName.trim() || !propertyCity.trim() || !propertyAddress.trim()}>Continue →</Button>
+                  {addListingOnly ? (
+                    <Button variant="ghost" asChild><Link href="/host/dashboard">← Back</Link></Button>
+                  ) : (
+                    <Button variant="ghost" onClick={() => setStep(5)}>← Back</Button>
+                  )}
+                  <Button onClick={() => setStep(addListingOnly ? 2 : 7)} disabled={!propertyName.trim() || !propertyCity.trim() || !propertyAddress.trim()}>Continue →</Button>
                 </div>
               </div>
             )}
 
-            {step === 7 && (
+            {contentStep === 7 && (
               <div>
-                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 7 of 12</span>
+                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 7 of {totalSteps}</span>
                 <h2 className="text-2xl font-semibold mt-2 mb-2">Description & Rules</h2>
                 <p className="text-nexa-ink-3 mb-6">Describe your space and set house rules.</p>
                 <div className="space-y-4 mb-6">
@@ -837,15 +894,15 @@ export default function HostPage() {
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="ghost" onClick={() => setStep(6)}>← Back</Button>
-                  <Button onClick={() => setStep(8)} disabled={!description.trim()}>Continue →</Button>
+                  <Button variant="ghost" onClick={() => setStep(addListingOnly ? 1 : 6)}>← Back</Button>
+                  <Button onClick={() => setStep(addListingOnly ? 3 : 8)} disabled={!description.trim()}>Continue →</Button>
                 </div>
               </div>
             )}
 
-            {step === 8 && (
+            {contentStep === 8 && (
               <div>
-                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 8 of 12</span>
+                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 8 of {totalSteps}</span>
                 <h2 className="text-2xl font-semibold mt-2 mb-2">Pricing</h2>
                 <p className="text-nexa-ink-3 mb-6">Set your rates and fees.</p>
                 <div className="space-y-4 mb-6">
@@ -867,15 +924,15 @@ export default function HostPage() {
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="ghost" onClick={() => setStep(7)}>← Back</Button>
-                  <Button onClick={() => setStep(9)} disabled={!basePrice || Number(basePrice) <= 0}>Continue →</Button>
+                  <Button variant="ghost" onClick={() => setStep(addListingOnly ? 2 : 7)}>← Back</Button>
+                  <Button onClick={() => setStep(addListingOnly ? 4 : 9)} disabled={!basePrice || Number(basePrice) <= 0}>Continue →</Button>
                 </div>
               </div>
             )}
 
-            {step === 9 && (
+            {contentStep === 9 && (
               <div>
-                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 9 of 12</span>
+                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 9 of {totalSteps}</span>
                 <h2 className="text-2xl font-semibold mt-2 mb-2">Check-in Contact</h2>
                 <p className="text-nexa-ink-3 mb-6">Who will greet guests? Add the primary contact for check-in.</p>
                 <div className="space-y-4 mb-6">
@@ -897,15 +954,15 @@ export default function HostPage() {
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="ghost" onClick={() => setStep(8)}>← Back</Button>
-                  <Button onClick={() => setStep(10)} disabled={!contactName.trim() || !contactPhone.trim()}>Continue →</Button>
+                  <Button variant="ghost" onClick={() => setStep(addListingOnly ? 3 : 8)}>← Back</Button>
+                  <Button onClick={() => setStep(addListingOnly ? 5 : 10)} disabled={!contactName.trim() || !contactPhone.trim()}>Continue →</Button>
                 </div>
               </div>
             )}
 
-            {step === 10 && (
+            {contentStep === 10 && (
               <div>
-                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 10 of 12</span>
+                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 10 of {totalSteps}</span>
                 <h2 className="text-2xl font-semibold mt-2 mb-2">Upload Photos</h2>
                 <p className="text-nexa-ink-3 mb-4">Add at least 12 photos. Include: entrance, living room, bedroom(s), bathroom(s), kitchen, exterior, area reference.</p>
                 <div className="mb-4 flex flex-wrap gap-3">
@@ -921,15 +978,15 @@ export default function HostPage() {
                 </div>
                 <p className="text-sm text-nexa-ink-4 mb-6">{photos.length} / 12 minimum</p>
                 <div className="flex gap-3">
-                  <Button variant="ghost" onClick={() => setStep(9)}>← Back</Button>
-                  <Button onClick={() => setStep(11)} disabled={photos.length < 12}>Continue →</Button>
+                  <Button variant="ghost" onClick={() => setStep(addListingOnly ? 4 : 9)}>← Back</Button>
+                  <Button onClick={() => setStep(addListingOnly ? 6 : 11)} disabled={photos.length < 12}>Continue →</Button>
                 </div>
               </div>
             )}
 
-            {step === 11 && (
+            {contentStep === 11 && (
               <div>
-                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 11 of 12</span>
+                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 11 of {totalSteps}</span>
                 <h2 className="text-2xl font-semibold mt-2 mb-2">Walkthrough Video</h2>
                 <p className="text-nexa-ink-3 mb-6">Upload a 45-second to 2-minute walkthrough: face camera → door → full tour. Required for approval.</p>
                 <div className="mb-6">
@@ -946,15 +1003,15 @@ export default function HostPage() {
                   )}
                 </div>
                 <div className="flex gap-3">
-                  <Button variant="ghost" onClick={() => setStep(10)}>← Back</Button>
-                  <Button onClick={() => setStep(12)} disabled={!walkthroughVideo}>Continue →</Button>
+                  <Button variant="ghost" onClick={() => setStep(addListingOnly ? 5 : 10)}>← Back</Button>
+                  <Button onClick={() => setStep(addListingOnly ? 7 : 12)} disabled={!walkthroughVideo}>Continue →</Button>
                 </div>
               </div>
             )}
 
-            {step === 12 && !listingSubmitted && (
+            {contentStep === 12 && !listingSubmitted && (
               <div>
-                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 12 of 12</span>
+                <span className="text-xs font-semibold uppercase text-nexa-primary">Step 12 of {totalSteps}</span>
                 <h2 className="text-2xl font-semibold mt-2 mb-2">Submit your listing</h2>
                 <p className="text-nexa-ink-3 mb-6">Review your checklist before going live.</p>
                 <div className="space-y-2.5 mb-6">
@@ -978,7 +1035,7 @@ export default function HostPage() {
                   <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-red-800 text-sm mb-6">{listingError}</div>
                 )}
                 <div className="flex gap-3">
-                  <Button variant="ghost" onClick={() => setStep(11)}>← Back</Button>
+                  <Button variant="ghost" onClick={() => setStep(addListingOnly ? 6 : 11)}>← Back</Button>
                   <Button
                     size="lg"
                     disabled={photos.length < 12 || !walkthroughVideo || listingSubmitting}
@@ -990,7 +1047,7 @@ export default function HostPage() {
               </div>
             )}
 
-            {step === 12 && listingSubmitted && (
+            {contentStep === 12 && listingSubmitted && (
               <div className="text-center py-8">
                 <div className="inline-flex w-16 h-16 rounded-full bg-green-100 items-center justify-center text-3xl mb-6">✓</div>
                 <h2 className="text-2xl font-semibold text-nexa-ink mb-2">Listing submitted for review</h2>
