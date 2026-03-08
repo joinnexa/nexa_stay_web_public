@@ -38,6 +38,19 @@ export interface StaysListing {
     id: string;
     full_name?: string | null;
   } | null;
+  media?: { asset_id: string; kind: "PHOTO" | "VIDEO" | "WALKTHROUGH"; sort_order?: number }[];
+}
+
+/** Occupant/guest identity for booking verification */
+export interface CreateBookingOccupantDto {
+  full_name: string;
+  id_number?: string;
+  is_primary?: boolean;
+  phone?: string;
+  email?: string;
+  gender?: string;
+  id_document_front_asset_id?: string;
+  id_document_back_asset_id?: string;
 }
 
 export interface CreateBookingDto {
@@ -46,11 +59,14 @@ export interface CreateBookingDto {
   checkout_date: string;
   guest_count: number;
   idempotency_key?: string;
-  occupants?: {
-    full_name: string;
-    id_number?: string;
-    is_primary?: boolean;
-  }[];
+  occupants?: CreateBookingOccupantDto[];
+}
+
+/** Occupant info shared with host/admin — full_name and id_number only (no ID document) */
+export interface BookingOccupantInfo {
+  full_name: string;
+  id_number: string | null;
+  is_primary?: boolean;
 }
 
 export interface StaysBooking {
@@ -66,6 +82,7 @@ export interface StaysBooking {
   total_paid: number | null;
   payout_amount: number | null;
   currency: string;
+  occupants?: BookingOccupantInfo[];
   listing?: {
     id: string;
     title: string;
@@ -95,6 +112,23 @@ export interface SubmitHostVerificationBody {
   selfie_asset_id?: string;
   /** Use existing approved KYC identity (name, phone, email, DOB) - skips document upload */
   use_existing_kyc?: boolean;
+}
+
+export interface HostBooking {
+  id: string;
+  listing_id: string;
+  status: string;
+  checkin_date: string;
+  checkout_date: string;
+  guest_count: number;
+  total_subtotal: number;
+  total_paid: number | null;
+  currency: string;
+  listing?: { id: string; title: string; city: string } | null;
+  guest_name?: string | null;
+  guest_phone?: string | null;
+  /** Declared occupants — full_name and id_number only (no ID document) */
+  occupants?: BookingOccupantInfo[];
 }
 
 export interface HostListingSummary {

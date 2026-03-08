@@ -4,6 +4,11 @@
  */
 
 import axios, { AxiosError } from "axios";
+import {
+  refreshToken as refreshTokenApi,
+  notifyTokenRefreshed,
+  notifyAuthLogout,
+} from "./auth-api";
 import type {
   SearchListingsParams,
   StaysListing,
@@ -12,10 +17,16 @@ import type {
   HostVerificationStatus,
   SubmitHostVerificationBody,
   HostListingSummary,
+  HostBooking,
   CreateHostListingBody,
 } from "./stays-types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:3000/api/v1";
+
+/** Public URL for listing media (photos, walkthrough) - no auth needed */
+export function getListingMediaUrl(listingId: string, assetId: string): string {
+  return `${API_BASE}/stays/listings/${encodeURIComponent(listingId)}/media/${encodeURIComponent(assetId)}`;
+}
 
 const client = axios.create({
   baseURL: API_BASE,
@@ -30,6 +41,9 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
+const JWT_KEY = "nexa_access_token";
+const REFRESH_TOKEN_KEY = "nexa_refresh_token";
+
 /** Retry on 429 with backoff; show friendly message if still failing */
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1500;
@@ -37,15 +51,36 @@ const RETRY_DELAY_MS = 1500;
 client.interceptors.response.use(
   (res) => res,
   async (err) => {
-    const config = err.config;
-    if (!config || config.__retryCount >= MAX_RETRIES) {
-      return Promise.reject(err);
-    }
+    const config = err.config as typeof err.config & { __retryCount?: number; __refreshRetried?: boolean };
+    if (!config) return Promise.reject(err);
+
     if (err.response?.status === 429) {
-      config.__retryCount = (config.__retryCount || 0) + 1;
-      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * config.__retryCount));
+      if ((config.__retryCount ?? 0) >= MAX_RETRIES) return Promise.reject(err);
+      config.__retryCount = (config.__retryCount ?? 0) + 1;
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (config.__retryCount ?? 1)));
       return client.request(config);
     }
+
+    if (err.response?.status === 401 && !config.__refreshRetried && typeof window !== "undefined") {
+      const hadAuth = config.headers?.["Authorization"] || config.headers?.Authorization;
+      const refresh = localStorage.getItem(REFRESH_TOKEN_KEY);
+      if (hadAuth && refresh) {
+        config.__refreshRetried = true;
+        try {
+          const tokens = await refreshTokenApi(refresh);
+          localStorage.setItem(JWT_KEY, tokens.access_token);
+          if (tokens.refresh_token) localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token);
+          notifyTokenRefreshed(tokens.access_token);
+          config.headers = { ...config.headers, Authorization: `Bearer ${tokens.access_token}` };
+          return client.request(config);
+        } catch {
+          localStorage.removeItem(JWT_KEY);
+          localStorage.removeItem(REFRESH_TOKEN_KEY);
+          notifyAuthLogout();
+        }
+      }
+    }
+
     return Promise.reject(err);
   }
 );
@@ -53,7 +88,7 @@ client.interceptors.response.use(
 /** Attach JWT for authenticated requests */
 function getAuthHeaders(): Record<string, string> {
   if (typeof window === "undefined") return {};
-  const token = localStorage.getItem("nexa_access_token");
+  const token = localStorage.getItem(JWT_KEY);
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -119,6 +154,88 @@ export async function createBooking(
   return unwrap<StaysBooking>(res);
 }
 
+/** Create or get payment intent for booking (PAYMENT_PENDING) */
+export async function createPaymentIntent(
+  bookingId: string,
+  token?: string | null,
+  idempotencyKey?: string
+): Promise<{
+  id: string;
+  booking_id: string;
+  provider: string;
+  provider_intent_id: string | null;
+  amount: number;
+  currency: string;
+  status: string;
+}> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const res = await client
+    .post(
+      `/stays/bookings/${bookingId}/payments/intent`,
+      idempotencyKey ? { idempotency_key: idempotencyKey } : {},
+      { headers }
+    )
+    .catch(handleError);
+  return unwrap(res);
+}
+
+/** Pay with Nexa Pay wallet (requires KYC-approved guest with sufficient balance) */
+export async function payWithWallet(
+  bookingId: string,
+  token?: string | null
+): Promise<{ id: string; booking_id: string; provider: string; amount: number; currency: string; status: string }> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const res = await client
+    .post(`/stays/bookings/${bookingId}/payments/wallet`, {}, { headers })
+    .catch(handleError);
+  return unwrap(res);
+}
+
+/** Simulate card payment success (dev only - calls mock webhook) */
+export async function simulateCardPayment(
+  providerIntentId: string
+): Promise<void> {
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:3000/api/v1";
+  const res = await fetch(`${API_BASE}/stays/webhooks/payments/mock`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ provider_intent_id: providerIntentId }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.message ?? `Simulate failed: ${res.status}`);
+  }
+}
+
+/** Get guest's booking history (requires JWT) */
+export async function getGuestBookings(
+  token?: string | null
+): Promise<StaysBooking[]> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const res = await client
+    .get("/stays/bookings", { headers })
+    .catch(handleError);
+  const data = unwrap<StaysBooking[]>(res);
+  return Array.isArray(data) ? data : [];
+}
+
+/** Cancel booking (guest or host) */
+export async function cancelBooking(
+  bookingId: string,
+  cancelledBy: "guest" | "host",
+  reason?: string,
+  token?: string | null
+): Promise<void> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  await client
+    .post(
+      `/stays/bookings/${bookingId}/cancel`,
+      { cancelled_by: cancelledBy, reason: reason ?? undefined },
+      { headers }
+    )
+    .catch(handleError);
+}
+
 /** Get booking by ID (requires JWT) */
 export async function getBooking(
   id: string,
@@ -129,6 +246,18 @@ export async function getBooking(
     .get(`/stays/bookings/${id}`, { headers })
     .catch(handleError);
   return unwrap<StaysBooking>(res);
+}
+
+/** Get host's bookings (requires JWT) */
+export async function getHostBookings(
+  token?: string | null
+): Promise<HostBooking[]> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const res = await client
+    .get("/stays/host/bookings", { headers })
+    .catch(handleError);
+  const data = unwrap<HostBooking[]>(res);
+  return Array.isArray(data) ? data : [];
 }
 
 /** Get host's listings (requires JWT, approved host) */
@@ -230,6 +359,22 @@ export async function uploadHostDocumentBack(
   form.append("file", file);
   const res = await client
     .post("/stays/host/verification/documents/back", form, { headers })
+    .catch(handleError);
+  return unwrap<{ asset_id: string }>(res);
+}
+
+/** Upload occupant ID document for booking verification (requires JWT) */
+export async function uploadOccupantIdDocument(
+  file: File,
+  side: "front" | "back",
+  token?: string | null
+): Promise<{ asset_id: string }> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const form = new FormData();
+  form.append("file", file);
+  form.append("side", side);
+  const res = await client
+    .post("/stays/bookings/occupants/upload-id", form, { headers })
     .catch(handleError);
   return unwrap<{ asset_id: string }>(res);
 }

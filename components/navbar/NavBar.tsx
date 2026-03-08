@@ -7,19 +7,22 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
 import { ChevronDown, User, LogOut, Menu, X, LayoutDashboard } from "lucide-react";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 
 const navLinks = [
-  { href: "/listings", label: "Stays", id: "listings" },
-  { href: "/host", label: "Become a Host", id: "host" },
-  { href: "/#how", label: "How It Works", id: "home" },
-  { href: "/about", label: "About", id: "about" },
-  { href: "/contact", label: "Contact", id: "contact" },
+  { href: "/listings", labelKey: "nav.stays", id: "listings" },
+  { href: "/host", labelKey: "nav.becomeHost", id: "host" },
+  { href: "/#how", labelKey: "nav.howItWorks", id: "home" },
+  { href: "/about", labelKey: "nav.about", id: "about" },
+  { href: "/contact", labelKey: "nav.contact", id: "contact" },
 ];
 
 export const NavBar = () => {
   const pathname = usePathname();
+  const { t, localePath } = useLanguage();
   const { isAuthenticated, user, token, tokenType, logout } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -51,9 +54,11 @@ export const NavBar = () => {
   }, [mobileMenuOpen]);
 
   const isActive = (href: string, id: string) => {
-    if (href === "/") return pathname === "/";
-    if (href.startsWith("/#")) return pathname === "/" && id === "home";
-    return pathname.startsWith(href);
+    if (href === "/" || href.startsWith("/#")) {
+      return pathname.match(/^\/[a-z]{2}\/?$/) != null && id === "home";
+    }
+    const fullHref = localePath(href);
+    return pathname === fullHref || pathname.startsWith(fullHref + "/");
   };
 
   return (
@@ -61,7 +66,7 @@ export const NavBar = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 h-[72px] bg-[rgba(253,251,252,0.92)] backdrop-blur-xl border-b border-nexa-line flex items-center">
       <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 flex items-center gap-4 md:gap-10">
         <Link
-          href="/"
+          href={localePath("/")}
           className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity shrink-0"
         >
           <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-lg overflow-hidden border-2 border-nexa-primary-soft">
@@ -78,11 +83,11 @@ export const NavBar = () => {
           </span>
         </Link>
 
-        <div className="hidden lg:flex gap-7 ml-auto">
-          {navLinks.map(({ href, label, id }) => (
+        <div className="hidden lg:flex gap-7 items-center ml-auto">
+          {navLinks.map(({ href, labelKey, id }) => (
             <Link
               key={id}
-              href={href}
+              href={href.startsWith("/#") ? localePath("/") + href.slice(1) : localePath(href)}
               className={cn(
                 "text-sm font-medium py-1 border-b-2 border-transparent transition-colors",
                 isActive(href, id)
@@ -90,9 +95,10 @@ export const NavBar = () => {
                   : "text-nexa-ink-3 hover:text-nexa-primary"
               )}
             >
-              {label}
+              {t(labelKey)}
             </Link>
           ))}
+          <LanguageSelector />
         </div>
 
         <div className="flex gap-2 sm:gap-3 ml-auto lg:ml-5 relative" ref={menuRef}>
@@ -109,40 +115,40 @@ export const NavBar = () => {
                   token={tokenType === "jwt" ? token : null}
                   size="sm"
                 />
-                <span className="text-sm font-medium hidden sm:inline">Profile</span>
+                <span className="text-sm font-medium hidden sm:inline">{t("common.profile")}</span>
                 <ChevronDown className={cn("h-4 w-4 transition-transform", profileOpen && "rotate-180")} />
               </button>
               {profileOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 py-1 bg-white rounded-lg shadow-lg border border-nexa-line z-50">
                   <Link
-                    href="/profile"
+                    href={localePath("/profile")}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-nexa-ink hover:bg-nexa-bg-2"
                     onClick={() => setProfileOpen(false)}
                   >
                     <User className="h-4 w-4" />
-                    Profile
+                    {t("common.profile")}
                   </Link>
                   <Link
-                    href="/listings"
+                    href={localePath("/my-bookings")}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-nexa-ink hover:bg-nexa-bg-2"
                     onClick={() => setProfileOpen(false)}
                   >
-                    My Stays
+                    {t("nav.myBookings")}
                   </Link>
                   <Link
-                    href="/host/dashboard"
+                    href={localePath("/host/dashboard")}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-nexa-ink hover:bg-nexa-bg-2"
                     onClick={() => setProfileOpen(false)}
                   >
                     <LayoutDashboard className="h-4 w-4" />
-                    Host dashboard
+                    {t("nav.hostDashboard")}
                   </Link>
                   <Link
-                    href="/host"
+                    href={localePath("/host")}
                     className="flex items-center gap-2 px-4 py-2 text-sm text-nexa-ink hover:bg-nexa-bg-2"
                     onClick={() => setProfileOpen(false)}
                   >
-                    Become a Host
+                    {t("nav.becomeHost")}
                   </Link>
                   <button
                     onClick={() => {
@@ -152,14 +158,14 @@ export const NavBar = () => {
                     className="flex items-center gap-2 w-full px-4 py-2 text-sm text-nexa-ink hover:bg-nexa-bg-2 text-left"
                   >
                     <LogOut className="h-4 w-4" />
-                    Sign out
+                    {t("common.signOut")}
                   </button>
                 </div>
               )}
             </>
           ) : (
             <Button variant="default" size="sm" className="min-h-[44px] sm:min-h-0" asChild>
-              <Link href="/login">Sign In</Link>
+              <Link href={localePath("/login")}>{t("common.signIn")}</Link>
             </Button>
           )}
           <button
@@ -192,7 +198,7 @@ export const NavBar = () => {
         )}
       >
         <div className="flex items-center justify-between p-4 border-b border-nexa-line">
-          <span className="font-display text-lg font-bold text-nexa-ink">Menu</span>
+          <span className="font-display text-lg font-bold text-nexa-ink">{t("common.menu")}</span>
           <button
             onClick={() => setMobileMenuOpen(false)}
             className="flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-lg hover:bg-nexa-bg-2 text-nexa-ink"
@@ -202,44 +208,47 @@ export const NavBar = () => {
           </button>
         </div>
         <nav className="flex flex-col p-4 gap-1 overflow-y-auto">
-          {navLinks.map(({ href, label, id }) => (
+          {navLinks.map(({ href, labelKey, id }) => (
             <Link
               key={id}
-              href={href}
+              href={href.startsWith("/#") ? localePath("/") + href.slice(1) : localePath(href)}
               className={cn(
                 "px-4 py-3 min-h-[44px] flex items-center rounded-xl text-base font-medium transition-colors",
                 isActive(href, id) ? "text-nexa-primary bg-nexa-primary-soft" : "text-nexa-ink hover:bg-nexa-bg-2"
               )}
               onClick={() => setMobileMenuOpen(false)}
             >
-              {label}
+              {t(labelKey)}
             </Link>
           ))}
+          <div className="mt-2 px-4 py-2">
+            <LanguageSelector />
+          </div>
           <div className="mt-4 pt-4 border-t border-nexa-line">
             {isAuthenticated ? (
               <>
                 <Link
-                  href="/profile"
+                  href={localePath("/profile")}
                   className="flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-xl text-nexa-ink hover:bg-nexa-bg-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <User className="h-4 w-4" />
-                  Profile
+                  {t("common.profile")}
                 </Link>
                 <Link
-                  href="/listings"
+                  href={localePath("/my-bookings")}
                   className="flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-xl text-nexa-ink hover:bg-nexa-bg-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  My Stays
+                  {t("nav.myBookings")}
                 </Link>
                 <Link
-                  href="/host/dashboard"
+                  href={localePath("/host/dashboard")}
                   className="flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-xl text-nexa-ink hover:bg-nexa-bg-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <LayoutDashboard className="h-4 w-4" />
-                  Host dashboard
+                  {t("nav.hostDashboard")}
                 </Link>
                 <button
                   onClick={() => {
@@ -249,16 +258,16 @@ export const NavBar = () => {
                   className="flex items-center gap-2 w-full px-4 py-3 min-h-[44px] rounded-xl text-nexa-ink hover:bg-nexa-bg-2 text-left"
                 >
                   <LogOut className="h-4 w-4" />
-                  Sign out
+                  {t("common.signOut")}
                 </button>
               </>
             ) : (
               <Link
-                href="/login"
+                href={localePath("/login")}
                 className="flex items-center justify-center px-4 py-3 min-h-[44px] rounded-xl bg-nexa-primary text-white font-semibold"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Sign In
+                {t("common.signIn")}
               </Link>
             )}
           </div>

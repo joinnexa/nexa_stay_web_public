@@ -1,7 +1,10 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { NavBar } from "@/components/navbar/NavBar";
 import { Footer } from "@/components/footer/Footer";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface LegalLayoutProps {
   title: string;
@@ -18,6 +21,7 @@ export function LegalLayout({
   otherLinks,
   children,
 }: LegalLayoutProps) {
+  const { t, localePath } = useLanguage();
   return (
     <>
       <NavBar />
@@ -25,7 +29,7 @@ export function LegalLayout({
         <section className="bg-gradient-to-br from-nexa-primary-soft to-nexa-bg pt-[calc(72px+64px)] pb-16 border-b border-nexa-line">
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
             <span className="block text-xs font-semibold tracking-[0.12em] uppercase text-nexa-primary mb-3">
-              Legal
+              {t("legalLayout.legal")}
             </span>
             <h1 className="text-4xl font-bold text-nexa-ink mb-4">{title}</h1>
             <p className="max-w-[580px] text-lg">{subtitle}</p>
@@ -36,7 +40,7 @@ export function LegalLayout({
           <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-0">
             <aside className="lg:sticky lg:top-[calc(72px+32px)] lg:self-start h-fit pr-10 border-r border-nexa-line pt-2 lg:mb-0 mb-10">
               <h4 className="text-xs font-bold uppercase tracking-wider text-nexa-ink-4 mb-3.5">
-                Sections
+                {t("legalLayout.sections")}
               </h4>
               <nav className="flex flex-col gap-1">
                 {sections.map((s) => (
@@ -53,7 +57,7 @@ export function LegalLayout({
                 {otherLinks.map((link) => (
                   <Link
                     key={link.href}
-                    href={link.href}
+                    href={localePath(link.href)}
                     className="block text-sm text-nexa-ink-3 mb-2 hover:text-nexa-primary transition-colors"
                   >
                     → {link.label}

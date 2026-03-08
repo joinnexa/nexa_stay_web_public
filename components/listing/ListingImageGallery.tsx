@@ -1,0 +1,163 @@
+"use client";
+
+import React, { useState, useCallback, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getListingMediaUrl } from "@/lib/stays-api";
+
+const SWIPE_THRESHOLD = 50;
+
+interface MediaItem {
+  asset_id: string;
+  kind: string;
+  sort_order?: number;
+}
+
+interface ListingImageGalleryProps {
+  listingId: string;
+  media: MediaItem[];
+  alt: string;
+  placeholder?: string;
+  aspectRatio?: "4/3" | "16/9" | "1/1";
+  className?: string;
+  onImageClick?: (imageUrl: string) => void;
+  showDots?: boolean;
+  showArrows?: boolean;
+}
+
+const placeholderImg = "https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=800&q=80";
+
+export function ListingImageGallery({
+  listingId,
+  media,
+  alt,
+  placeholder = placeholderImg,
+  aspectRatio = "4/3",
+  className = "",
+  onImageClick,
+  showDots = true,
+  showArrows = true,
+}: ListingImageGalleryProps) {
+  const photos = media
+    .filter((m) => m.kind === "PHOTO")
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
+  const touchStart = useRef<number | null>(null);
+  const touchEnd = useRef<number | null>(null);
+
+  const items = photos.length > 0 ? photos : [{ asset_id: "placeholder", kind: "PHOTO", sort_order: 0 }];
+  const current = items[currentIndex];
+  const isPlaceholder = current?.asset_id === "placeholder" || imgErrors[current?.asset_id];
+  const imgSrc = isPlaceholder ? placeholder : getListingMediaUrl(listingId, current.asset_id);
+
+  const goTo = useCallback(
+    (index: number) => {
+      setCurrentIndex((Math.max(0, Math.min(index, items.length - 1)) + items.length) % items.length);
+    },
+    [items.length]
+  );
+
+  const goPrev = useCallback(() => goTo(currentIndex - 1), [currentIndex, goTo]);
+  const goNext = useCallback(() => goTo(currentIndex + 1), [currentIndex, goTo]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStart.current = e.targetTouches[0].clientX;
+    touchEnd.current = null;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    touchEnd.current = e.targetTouches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (touchStart.current == null || touchEnd.current == null) return;
+    const diff = touchStart.current - touchEnd.current;
+    if (Math.abs(diff) > SWIPE_THRESHOLD) {
+      if (diff > 0) goNext();
+      else goPrev();
+    }
+    touchStart.current = null;
+    touchEnd.current = null;
+  }, [goPrev, goNext]);
+
+  const handleImageError = useCallback(() => {
+    if (current?.asset_id) setImgErrors((prev) => ({ ...prev, [current.asset_id]: true }));
+  }, [current?.asset_id]);
+
+  if (items.length === 0) return null;
+
+  const aspectClass = {
+    "4/3": "aspect-[4/3]",
+    "16/9": "aspect-video",
+    "1/1": "aspect-square",
+  }[aspectRatio];
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl bg-nexa-bg ${aspectClass} ${className}`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <button
+        type="button"
+        onClick={() => current?.asset_id !== "placeholder" && !imgErrors[current?.asset_id] && onImageClick?.(imgSrc)}
+        className="block w-full h-full focus:outline-none focus:ring-0"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imgSrc}
+          alt={`${alt} — ${currentIndex + 1} of ${items.length}`}
+          className="w-full h-full object-cover select-none"
+          draggable={false}
+          onError={handleImageError}
+        />
+      </button>
+
+      {items.length > 1 && (
+        <>
+          {showArrows && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); goPrev(); }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-nexa-ink transition-all hover:scale-110"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); goNext(); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-nexa-ink transition-all hover:scale-110"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+          )}
+          {showDots && (
+            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+              {items.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); goTo(i); }}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    i === currentIndex ? "bg-white scale-125" : "bg-white/60 hover:bg-white/80"
+                  }`}
+                  aria-label={`Go to image ${i + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+      {items.length > 1 && (
+        <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-black/50 text-white text-[0.7rem] font-medium">
+          {currentIndex + 1} / {items.length}
+        </div>
+      )}
+    </div>
+  );
+}

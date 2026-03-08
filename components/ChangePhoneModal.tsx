@@ -3,8 +3,10 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { sendOtp } from "@/lib/auth-api";
 import { changePhone } from "@/lib/kyc-api";
+import { normalizeMoroccanPhone, getLocalPhonePart } from "@/lib/validators";
 import { cn } from "@/lib/utils";
 
 const IS_DEV = process.env.NODE_ENV === "development";
@@ -51,10 +53,12 @@ export function ChangePhoneModal({
       setError("Enter new phone number");
       return;
     }
+    const normalized = normalizeMoroccanPhone(newPhone);
     setError(null);
     setSendingOtp(true);
     try {
-      await sendOtp(newPhone.trim());
+      await sendOtp(normalized);
+      setNewPhone(normalized);
       setStep("new_otp");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to send OTP");
@@ -77,13 +81,14 @@ export function ChangePhoneModal({
       setError("Fill all fields");
       return;
     }
+    const normalizedNew = normalizeMoroccanPhone(newPhone);
     setError(null);
     setSubmitting(true);
     try {
       await changePhone(
         {
           current_otp: currentOtp.trim(),
-          new_phone_number: newPhone.trim(),
+          new_phone_number: normalizedNew,
           new_otp: newOtp.trim(),
         },
         getToken
@@ -167,12 +172,10 @@ export function ChangePhoneModal({
             <>
               <div>
                 <label className="block text-sm font-medium text-nexa-ink mb-2">New phone number</label>
-                <input
-                  type="tel"
-                  value={newPhone}
-                  onChange={(e) => setNewPhone(e.target.value)}
-                  placeholder="+212612345678"
-                  className="w-full px-4 py-3 rounded-xl border border-nexa-line text-nexa-ink placeholder:text-nexa-ink-4"
+                <PhoneInput
+                  value={getLocalPhonePart(newPhone)}
+                  onChange={(v) => setNewPhone(v)}
+                  placeholder="6 XX XX XX XX"
                 />
               </div>
               <div className="flex gap-3">
@@ -200,7 +203,7 @@ export function ChangePhoneModal({
             <>
               <div>
                 <p className="text-sm text-nexa-ink-3 mb-2">Enter the code sent to:</p>
-                <p className="font-medium text-nexa-ink">{newPhone}</p>
+                <p className="font-medium text-nexa-ink">{normalizeMoroccanPhone(newPhone) || newPhone}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-nexa-ink mb-2">OTP code</label>

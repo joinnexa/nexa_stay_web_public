@@ -66,11 +66,43 @@ export function validateDates(
   return { valid: true };
 }
 
-/** Validate phone number */
+/** Morocco country code */
+export const MOROCCO_PREFIX = "+212";
+
+/** Get local part (612345677) from full (+212612345677) or return as-is */
+export function getLocalPhonePart(value: string): string {
+  const s = value.replace(/\s/g, "");
+  if (s.startsWith("+212")) return s.slice(4);
+  if (s.startsWith("212")) return s.slice(3);
+  if (s.startsWith("0")) return s.slice(1);
+  return s;
+}
+
+/**
+ * Normalize Moroccan phone to E.164 (+212612345677).
+ * Accepts: 0612345677, 612345677, 212612345677, +212612345677
+ */
+export function normalizeMoroccanPhone(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "";
+  let local = digits;
+  if (local.startsWith("212")) {
+    local = local.slice(3);
+  } else if (local.startsWith("0")) {
+    local = local.slice(1);
+  }
+  // Morocco mobile: 6XX XXX XXX (9 digits)
+  if (local.length >= 9 && local.startsWith("6")) {
+    return `${MOROCCO_PREFIX}${local.slice(0, 9)}`;
+  }
+  return `${MOROCCO_PREFIX}${local}`;
+}
+
+/** Validate phone number (accepts 06..., 6..., 212..., +212..., normalizes before check) */
 export function validatePhone(value: string): ValidationResult {
-  const normalized = value.replace(/\s/g, "");
-  if (!normalized || normalized.length < 10) {
-    return { valid: false, error: "Enter a valid phone number" };
+  const normalized = value.trim() ? normalizeMoroccanPhone(value) : "";
+  if (!normalized || normalized.length < 12) {
+    return { valid: false, error: "Enter a valid phone number (e.g. 0612345677)" };
   }
   if (!PHONE_REGEX.test(normalized)) {
     return { valid: false, error: "Phone number format is invalid" };

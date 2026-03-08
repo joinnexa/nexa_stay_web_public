@@ -3,7 +3,9 @@
  * Used for guest/host login. Stays uses same auth as Pay/Go.
  */
 
-import axios from "axios";
+import axios, { type InternalAxiosRequestConfig } from "axios";
+
+type RequestConfigWithRetry = InternalAxiosRequestConfig & { __retryCount?: number };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:3000/api/v1";
 
@@ -16,7 +18,7 @@ const client = axios.create({
 client.interceptors.response.use(
   (res) => res,
   async (err) => {
-    const config = err.config as { __retryCount?: number } | undefined;
+    const config = err.config as RequestConfigWithRetry | undefined;
     const is429 = err.response?.status === 429;
     if (is429 && config && (config.__retryCount ?? 0) < 1) {
       config.__retryCount = (config.__retryCount ?? 0) + 1;
@@ -86,6 +88,34 @@ export async function completeRegistration(
     refresh_token: raw.refresh_token,
     user_id: raw.user_id,
   };
+}
+
+/** Refresh access token using refresh_token (for persistent sessions) */
+export async function refreshToken(
+  refresh_token: string
+): Promise<{ access_token: string; refresh_token: string }> {
+  const res = await client.post("/auth/refresh", { refresh_token });
+  const raw = res.data?.data ?? res.data ?? {};
+  return {
+    access_token: raw.access_token,
+    refresh_token: raw.refresh_token ?? refresh_token,
+  };
+}
+
+/** Notify AuthContext that tokens were refreshed (e.g. by API interceptor) */
+export function notifyTokenRefreshed(accessToken: string): void {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("nexa:auth:token-refreshed", { detail: { accessToken } })
+    );
+  }
+}
+
+/** Notify AuthContext that refresh failed and user should be logged out */
+export function notifyAuthLogout(): void {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("nexa:auth:logout"));
+  }
 }
 
 /** Verify PIN; returns access_token and user_id for logged-in session */

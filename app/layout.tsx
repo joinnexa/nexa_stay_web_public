@@ -1,7 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
 import { Playfair_Display, DM_Sans } from "next/font/google";
-import { AuthProvider } from "@/contexts/AuthContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -40,9 +39,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${playfair.variable} ${dmSans.variable}`} suppressHydrationWarning>
-      <body suppressHydrationWarning>
-        <AuthProvider>{children}</AuthProvider>
-      </body>
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }

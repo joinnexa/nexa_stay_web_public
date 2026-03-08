@@ -7,8 +7,13 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import { refreshToken as refreshTokenApi } from "@/lib/auth-api";
+
+const AUTH_TOKEN_REFRESHED = "nexa:auth:token-refreshed";
+const AUTH_LOGOUT = "nexa:auth:logout";
 
 const JWT_KEY = "nexa_access_token";
+const REFRESH_TOKEN_KEY = "nexa_refresh_token";
 const OTP_SESSION_KEY = "nexa_otp_session_token";
 
 export type TokenType = "jwt" | "otp_session" | "none";
@@ -33,8 +38,8 @@ interface AuthContextValue {
   user: User | null;
   ready: boolean;
   isAuthenticated: boolean;
-  /** Set JWT after login or registration complete */
-  setAuthJwt: (accessToken: string) => void;
+  /** Set JWT after login or registration complete (refreshToken optional, for persistent sessions) */
+  setAuthJwt: (accessToken: string, refreshToken?: string) => void;
   /** Set OTP session token for registration flow */
   setAuthOtpSession: (otpSessionToken: string) => void;
   /** Refresh user from API (e.g. after profile/photo update) */
@@ -47,20 +52,20 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-/** Fetch current user when we have JWT. Used internally. */
+/** Fetch current user when we have JWT. Returns user or null; status 401 means token is invalid. */
 async function fetchCurrentUser(
   baseUrl: string,
   jwt: string
-): Promise<User | null> {
+): Promise<{ user: User | null; status?: number }> {
   try {
     const res = await fetch(`${baseUrl}/users/me`, {
       headers: { Authorization: `Bearer ${jwt}` },
     });
-    if (!res.ok) return null;
+    if (!res.ok) return { user: null, status: res.status };
     const data = await res.json();
-    return data?.id ? data : null;
+    return { user: data?.id ? data : null };
   } catch {
-    return null;
+    return { user: null };
   }
 }
 
@@ -75,29 +80,95 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ? process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:3000/api/v1"
       : "";
 
+  const clearStoredTokens = useCallback(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(JWT_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+    }
+    setToken(null);
+    setTokenType("none");
+    setUser(null);
+  }, []);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
+    let cancelled = false;
     const jwt = localStorage.getItem(JWT_KEY);
+    const refresh = localStorage.getItem(REFRESH_TOKEN_KEY);
     const otp = localStorage.getItem(OTP_SESSION_KEY);
-    if (jwt) {
-      setToken(jwt);
-      setTokenType("jwt");
-      fetchCurrentUser(apiBase, jwt).then(setUser);
-    } else if (otp) {
-      setToken(otp);
-      setTokenType("otp_session");
-      setUser(null);
-    } else {
-      setToken(null);
-      setTokenType("none");
-      setUser(null);
-    }
-    setReady(true);
-  }, [apiBase]);
 
-  const setAuthJwt = useCallback((accessToken: string) => {
+    async function initAuth() {
+      if (jwt) {
+        setToken(jwt);
+        setTokenType("jwt");
+        const { user: u, status } = await fetchCurrentUser(apiBase, jwt);
+        if (cancelled) return;
+        if (status === 401 && refresh) {
+          try {
+            const tokens = await refreshTokenApi(refresh);
+            if (cancelled) return;
+            localStorage.setItem(JWT_KEY, tokens.access_token);
+            if (tokens.refresh_token) {
+              localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token);
+            }
+            setToken(tokens.access_token);
+            const { user: u2, status: s2 } = await fetchCurrentUser(apiBase, tokens.access_token);
+            if (cancelled) return;
+            if (s2 === 401) {
+              clearStoredTokens();
+            } else {
+              setUser(u2 ?? null);
+            }
+          } catch {
+            if (!cancelled) clearStoredTokens();
+          }
+        } else if (status === 401) {
+          clearStoredTokens();
+        } else if (u) {
+          setUser(u);
+        } else {
+          setUser(null);
+        }
+      } else if (otp) {
+        setToken(otp);
+        setTokenType("otp_session");
+        setUser(null);
+      } else {
+        setToken(null);
+        setTokenType("none");
+        setUser(null);
+      }
+      if (!cancelled) setReady(true);
+    }
+    initAuth();
+    return () => { cancelled = true; };
+  }, [apiBase, clearStoredTokens]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onTokenRefreshed = (e: Event) => {
+      const detail = (e as CustomEvent<{ accessToken: string }>).detail;
+      if (detail?.accessToken) {
+        setToken(detail.accessToken);
+      }
+    };
+    const onLogout = () => {
+      clearStoredTokens();
+    };
+    window.addEventListener(AUTH_TOKEN_REFRESHED, onTokenRefreshed);
+    window.addEventListener(AUTH_LOGOUT, onLogout);
+    return () => {
+      window.removeEventListener(AUTH_TOKEN_REFRESHED, onTokenRefreshed);
+      window.removeEventListener(AUTH_LOGOUT, onLogout);
+    };
+  }, [clearStoredTokens]);
+
+  const setAuthJwt = useCallback((accessToken: string, refreshToken?: string) => {
     if (typeof window !== "undefined") {
       localStorage.setItem(JWT_KEY, accessToken);
+      if (refreshToken) {
+        localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+      }
       localStorage.removeItem(OTP_SESSION_KEY);
     }
     setToken(accessToken);
@@ -105,7 +176,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     const base =
       process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:3000/api/v1";
-    fetchCurrentUser(base, accessToken).then(setUser);
+    fetchCurrentUser(base, accessToken).then(({ user: u, status }) => {
+      if (status === 401 && typeof window !== "undefined") {
+        localStorage.removeItem(JWT_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
+        setToken(null);
+        setTokenType("none");
+      } else {
+        setUser(u ?? null);
+      }
+    });
   }, []);
 
   const setAuthOtpSession = useCallback((otpSessionToken: string) => {
@@ -121,6 +201,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem(JWT_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
       localStorage.removeItem(OTP_SESSION_KEY);
     }
     setToken(null);
@@ -130,11 +211,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     const jwt = tokenType === "jwt" ? token : null;
-    if (jwt) {
-      const u = await fetchCurrentUser(apiBase, jwt);
-      setUser(u);
+    if (!jwt) return;
+    const { user: u, status } = await fetchCurrentUser(apiBase, jwt);
+    if (status === 401 && typeof window !== "undefined") {
+      const refresh = localStorage.getItem(REFRESH_TOKEN_KEY);
+      if (refresh) {
+        try {
+          const tokens = await refreshTokenApi(refresh);
+          localStorage.setItem(JWT_KEY, tokens.access_token);
+          if (tokens.refresh_token) {
+            localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token);
+          }
+          setToken(tokens.access_token);
+          const { user: u2 } = await fetchCurrentUser(apiBase, tokens.access_token);
+          setUser(u2 ?? null);
+          return;
+        } catch {
+          // Fall through to clear
+        }
+      }
+      clearStoredTokens();
+    } else {
+      setUser(u ?? null);
     }
-  }, [apiBase, token, tokenType]);
+  }, [apiBase, token, tokenType, clearStoredTokens]);
 
   /** Legacy: treats token as JWT if userId looks like UUID, else OTP session */
   const setAuth = useCallback((t: string, userId: string) => {
