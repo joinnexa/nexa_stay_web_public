@@ -1,15 +1,71 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { NavBar } from "@/components/navbar/NavBar";
 import { Footer } from "@/components/footer/Footer";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+const MAIL = {
+  support: "support@joinnexa.ma",
+  partnerships: "partnerships@joinnexa.ma",
+  general: "contact@joinnexa.ma",
+} as const;
+
+function recipientForReason(reason: string): string {
+  if (reason === "Support") return MAIL.support;
+  if (reason === "Partnership (10+ units)") return MAIL.partnerships;
+  if (reason === "Investments") return MAIL.partnerships;
+  return MAIL.general;
+}
+
 export default function ContactPage() {
   const { t } = useLanguage();
   const [reason, setReason] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const openMailto = (to: string, subjectLine: string) => {
+    const subject = encodeURIComponent(subjectLine);
+    window.location.href = `mailto:${to}?subject=${subject}`;
+  };
+
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const el = formRef.current;
+    if (!el) return;
+    const fd = new FormData(el);
+
+    const r = String(fd.get("reason") ?? reason ?? "").trim();
+    if (!r) return;
+
+    const fullName = String(fd.get("fullName") ?? "").trim();
+    const phone = String(fd.get("phone") ?? "").trim();
+    const email = String(fd.get("email") ?? "").trim();
+    const city = String(fd.get("city") ?? "").trim();
+    const message = String(fd.get("message") ?? "").trim();
+    const units = String(fd.get("partnershipUnits") ?? "").trim();
+    const propertyType = String(fd.get("propertyType") ?? "").trim();
+    const citiesCovered = String(fd.get("partnershipCities") ?? "").trim();
+
+    const parts = [
+      "— Nexa Stays contact form —",
+      `Reason: ${r}`,
+      `Name: ${fullName}`,
+      `Phone: ${phone}`,
+      `Email: ${email}`,
+      `City: ${city}`,
+      "",
+      "Message:",
+      message || "(none)",
+    ];
+    if (r === "Partnership (10+ units)") {
+      parts.push("", "Partnership details:", `Units: ${units}`, `Property type: ${propertyType}`, `Cities covered: ${citiesCovered}`);
+    }
+    const body = encodeURIComponent(parts.join("\n"));
+    const subject = encodeURIComponent(`[Nexa Stays] ${r}`);
+    window.location.href = `mailto:${recipientForReason(r)}?subject=${subject}&body=${body}`;
+  };
 
   return (
     <>
@@ -50,8 +106,12 @@ export default function ContactPage() {
                       📞 +212 6 9028 3339
                     </div>
                     <Button
+                      type="button"
                       size="sm"
-                      onClick={() => setReason("Support")}
+                      onClick={() => {
+                        setReason("Support");
+                        openMailto(MAIL.support, "Nexa Stays — Customer support");
+                      }}
                     >
                       {t("contact.sendSupport")}
                     </Button>
@@ -65,9 +125,13 @@ export default function ContactPage() {
                       {t("contact.portfolioDesc")}
                     </p>
                     <Button
+                      type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setReason("Partnership (10+ units)")}
+                      onClick={() => {
+                        setReason("Partnership (10+ units)");
+                        openMailto(MAIL.partnerships, "Nexa Stays — Portfolio partnership");
+                      }}
                     >
                       {t("contact.requestPartnership")}
                     </Button>
@@ -84,9 +148,13 @@ export default function ContactPage() {
                       📞 +7 995 558-21-75
                     </div>
                     <Button
+                      type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setReason("Investments")}
+                      onClick={() => {
+                        setReason("Investments");
+                        openMailto(MAIL.partnerships, "Nexa Stays — Investments");
+                      }}
                     >
                       {t("contact.sendInvestment")}
                     </Button>
@@ -101,15 +169,17 @@ export default function ContactPage() {
                   <p className="text-nexa-ink-3 text-sm mb-7">
                     {t("contact.replyNote")}
                   </p>
-                  <form className="space-y-5">
+                  <form ref={formRef} className="space-y-5" onSubmit={handleFormSubmit}>
                     <div>
                       <label className="block text-sm font-semibold text-nexa-ink-2 mb-2">
                         {t("contact.reasonRequired")}
                       </label>
                       <select
+                        name="reason"
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
                         className="w-full py-3 px-4 border border-nexa-line rounded-xl font-sans text-sm text-nexa-ink bg-white outline-none focus:border-nexa-primary focus:ring-2 focus:ring-nexa-primary/20"
+                        required
                       >
                         <option value="">{t("contact.selectReason")}</option>
                         <option value="Support">{t("contact.support")}</option>
@@ -126,7 +196,9 @@ export default function ContactPage() {
                           {t("contact.fullNameRequired")}
                         </label>
                         <input
+                          name="fullName"
                           type="text"
+                          required
                           placeholder={t("contact.fullNamePlaceholder")}
                           className="w-full py-3 px-4 border border-nexa-line rounded-xl font-sans text-sm outline-none focus:border-nexa-primary focus:ring-2 focus:ring-nexa-primary/20"
                         />
@@ -136,7 +208,9 @@ export default function ContactPage() {
                           {t("contact.phoneRequired")}
                         </label>
                         <input
+                          name="phone"
                           type="tel"
+                          required
                           placeholder={t("contact.phonePlaceholder")}
                           className="w-full py-3 px-4 border border-nexa-line rounded-xl font-sans text-sm outline-none focus:border-nexa-primary focus:ring-2 focus:ring-nexa-primary/20"
                         />
@@ -148,7 +222,10 @@ export default function ContactPage() {
                           {t("contact.emailRequired")}
                         </label>
                         <input
+                          name="email"
                           type="email"
+                          required
+                          autoComplete="email"
                           placeholder={t("contact.emailPlaceholder")}
                           className="w-full py-3 px-4 border border-nexa-line rounded-xl font-sans text-sm outline-none focus:border-nexa-primary focus:ring-2 focus:ring-nexa-primary/20"
                         />
@@ -158,6 +235,7 @@ export default function ContactPage() {
                           {t("contact.city")}
                         </label>
                         <input
+                          name="city"
                           type="text"
                           placeholder={t("contact.cityPlaceholder")}
                           className="w-full py-3 px-4 border border-nexa-line rounded-xl font-sans text-sm outline-none focus:border-nexa-primary focus:ring-2 focus:ring-nexa-primary/20"
@@ -169,7 +247,9 @@ export default function ContactPage() {
                         {t("contact.messageRequired")}
                       </label>
                       <textarea
+                        name="message"
                         rows={4}
+                        required
                         placeholder={t("contact.messagePlaceholder")}
                         className="w-full py-3 px-4 border border-nexa-line rounded-xl font-sans text-sm outline-none focus:border-nexa-primary focus:ring-2 focus:ring-nexa-primary/20 resize-y min-h-[120px]"
                       />
@@ -189,6 +269,7 @@ export default function ContactPage() {
                             {t("contact.numberOfUnits")}
                           </label>
                           <input
+                            name="partnershipUnits"
                             type="number"
                             min={10}
                             placeholder={t("contact.unitsPlaceholder")}
@@ -199,10 +280,13 @@ export default function ContactPage() {
                           <label className="block text-sm font-semibold mb-2">
                             {t("contact.propertyType")}
                           </label>
-                          <select className="w-full py-3 px-4 border border-nexa-line rounded-xl font-sans text-sm outline-none focus:border-nexa-primary">
-                            <option>Apartments</option>
-                            <option>Hotels</option>
-                            <option>Mixed</option>
+                          <select
+                            name="propertyType"
+                            className="w-full py-3 px-4 border border-nexa-line rounded-xl font-sans text-sm outline-none focus:border-nexa-primary"
+                          >
+                            <option value="Apartments">Apartments</option>
+                            <option value="Hotels">Hotels</option>
+                            <option value="Mixed">Mixed</option>
                           </select>
                         </div>
                       </div>
@@ -211,13 +295,14 @@ export default function ContactPage() {
                           {t("contact.citiesCovered")}
                         </label>
                         <input
+                          name="partnershipCities"
                           type="text"
                           placeholder={t("contact.citiesPlaceholder")}
                           className="w-full py-3 px-4 border border-nexa-line rounded-xl font-sans text-sm outline-none focus:border-nexa-primary"
                         />
                       </div>
                     </div>
-                    <Button size="lg" className="w-full justify-center mt-2">
+                    <Button type="submit" size="lg" className="w-full justify-center mt-2">
                       {t("contact.sendMessageBtn")}
                     </Button>
                   </form>
