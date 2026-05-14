@@ -9,6 +9,7 @@ out/
 build/
 dist/
 dist-ssr/
+*.tsbuildinfo
 
 # Debug
 npm-debug.log*

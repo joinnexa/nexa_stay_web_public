@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { NEXA_STAYS_LOGO_SRC } from "@/lib/brand-assets";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelector } from "@/components/ui/LanguageSelector";
@@ -71,7 +72,7 @@ export const NavBar = () => {
         >
           <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-lg overflow-hidden border-2 border-nexa-primary-soft">
             <Image
-              src="/images/nexastays.png"
+              src={NEXA_STAYS_LOGO_SRC}
               alt="Nexa Stays"
               fill
               sizes="36px"

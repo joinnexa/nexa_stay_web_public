@@ -10,9 +10,18 @@ import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/PhoneInput";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { sendOtp, verifyOtp } from "@/lib/auth-api";
+import { sendOtp, verifyOtp, type NexaProfileSnippet } from "@/lib/auth-api";
 import { validatePhone, normalizeMoroccanPhone, getLocalPhonePart } from "@/lib/validators";
 import { normalizeError } from "@/lib/api-client";
+import { NEXA_STAYS_LOGO_SRC } from "@/lib/brand-assets";
+
+/** Stays: require profile + Sumsub before treating OTP as a logged-in JWT session. */
+function needsStaysIdentityOnboarding(profile: NexaProfileSnippet | undefined): boolean {
+  if (!profile) return true;
+  if (profile.identity_verified === true) return false;
+  const k = String(profile.kyc_status || "").toUpperCase();
+  return k !== "APPROVED" && k !== "VERIFIED";
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -67,22 +76,38 @@ export default function LoginPage() {
         "otp_session_token" in data
           ? (data as { otp_session_token?: string }).otp_session_token
           : undefined;
-      const accounts =
-        "accounts" in data
-          ? (data as { accounts?: unknown[] }).accounts
+      const identitySessionToken =
+        "identity_session_token" in data
+          ? (data as { identity_session_token?: string }).identity_session_token
           : undefined;
-      const isExistingUser = Array.isArray(accounts) && accounts.length > 0;
+      const nexaProfile =
+        "nexa_profile" in data
+          ? (data as { nexa_profile?: NexaProfileSnippet }).nexa_profile
+          : undefined;
 
-      if (accessToken) {
-        const refresh = "refresh_token" in data ? (data as { refresh_token?: string }).refresh_token : undefined;
-        setAuthJwt(accessToken, refresh);
-        if (isExistingUser) {
-          router.push(homePath);
+      const identitySession = otpSessionToken ?? identitySessionToken;
+      const onboarding = needsStaysIdentityOnboarding(nexaProfile);
+      const registrationUrl = `${localePath("/registration")}?redirect=${encodeURIComponent(homePath)}&phone=${encodeURIComponent(phone)}`;
+
+      const refresh =
+        "refresh_token" in data
+          ? (data as { refresh_token?: string }).refresh_token
+          : undefined;
+
+      // Until identity is verified, keep only identity/OTP session — do not persist account JWT (browse stays logged-out).
+      if (accessToken && onboarding) {
+        if (identitySession) {
+          setAuthOtpSession(identitySession);
         } else {
-          router.push(
-            `${localePath("/registration")}?redirect=${encodeURIComponent(homePath)}&phone=${encodeURIComponent(phone)}`
-          );
+          setAuthJwt(accessToken, refresh);
         }
+        router.push(registrationUrl);
+        return;
+      }
+
+      if (accessToken && !onboarding) {
+        setAuthJwt(accessToken, refresh);
+        router.push(homePath);
         return;
       }
       if (otpSessionToken) {
@@ -123,7 +148,7 @@ export default function LoginPage() {
             >
               <div className="relative w-11 h-11 rounded-lg overflow-hidden">
                 <Image
-                  src="/images/nexastays.png"
+                  src={NEXA_STAYS_LOGO_SRC}
                   alt="Nexa Stays"
                   fill
                   sizes="120px"

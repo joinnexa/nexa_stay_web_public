@@ -131,7 +131,13 @@
     "copyright": "© 2026 Nexa. All rights reserved.",
     "secured": "Secured by Nexa. Operated by Nexa.",
     "customerRelations": "Customer Relations",
-    "investments": "Investments"
+    "investments": "Investments",
+    "disclaimer": "Nexa Stays is a booking platform for stays in Morocco. Features, fees, and availability may change. Use of the service is subject to our Terms and Privacy Policy.",
+    "rightsReserved": "All rights reserved.",
+    "contactLabel": "Contact",
+    "social": "Social",
+    "instagramJoinNexa": "@joinnexa",
+    "instagramNexaStays": "@nexastays.ma"
   },
   "login": {
     "title": "Enter your phone",

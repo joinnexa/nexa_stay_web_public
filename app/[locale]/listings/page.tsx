@@ -12,8 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { searchListings, getListingMediaUrl } from "@/lib/stays-api";
 import { ListingImageGallery } from "@/components/listing/ListingImageGallery";
 import type { StaysListing } from "@/lib/stays-types";
-
-const MOROCCO_CITIES = ["Agadir", "Casablanca", "Chefchaouen", "Essaouira", "Fes", "Marrakech", "Meknes", "Ouarzazate", "Rabat", "Tangier", "Taroudant"];
+import { MOROCCO_CITIES } from "@/lib/moroccan-cities";
 
 const vibeKeys = [
   "listings.rooftopSunsets",

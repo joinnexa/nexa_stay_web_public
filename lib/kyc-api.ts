@@ -118,6 +118,66 @@ export async function submitKyc(
   return unwrapResponse(res) ?? res.data;
 }
 
+export type KycProductSource = "PAY" | "GO" | "STAYS";
+
+/** Response shape from POST /kyc/sumsub/token */
+export interface CreateSumsubSdkTokenResult {
+  token?: string;
+  externalUserId?: string;
+  applicantId?: string | null;
+  levelName?: string;
+  ttlInSecs?: number;
+}
+
+/** Response shape from POST /kyc/sumsub/sync-status */
+export interface SyncSumsubStatusResult {
+  updated?: boolean;
+  userId?: string;
+  source?: string;
+  reviewStatus?: string | null;
+  reviewAnswer?: string | null;
+  status?: string;
+  kycProfileStatus?: string;
+}
+
+/** Create Sumsub Web/Mobile SDK access token (server calls Sumsub). Use OTP session or JWT. */
+export async function createSumsubSdkToken(
+  getToken: () => string | null,
+  source: KycProductSource = "STAYS",
+  extraBody?: Record<string, unknown>
+): Promise<CreateSumsubSdkTokenResult> {
+  const res = await jsonClient.post(
+    "/kyc/sumsub/token",
+    { source, ...extraBody },
+    {
+      headers: {
+        ...getAuthHeaders(getToken),
+        "X-Nexa-Product": "STAYS",
+      },
+    }
+  );
+  const data = (unwrapResponse(res) ?? res.data) as CreateSumsubSdkTokenResult;
+  return data;
+}
+
+/** Sync Sumsub applicant review status into Nexa KYC records. */
+export async function syncSumsubStatus(
+  getToken: () => string | null,
+  source: KycProductSource = "STAYS"
+): Promise<SyncSumsubStatusResult> {
+  const res = await jsonClient.post(
+    "/kyc/sumsub/sync-status",
+    { source },
+    {
+      headers: {
+        ...getAuthHeaders(getToken),
+        "X-Nexa-Product": "STAYS",
+      },
+    }
+  );
+  return (unwrapResponse(res) ?? res.data) as SyncSumsubStatusResult;
+}
+
 /** Upload ID document - validates file first */
 export async function uploadDocument(
   file: File,

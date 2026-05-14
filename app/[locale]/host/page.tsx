@@ -23,6 +23,8 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Menu } from "lucide-react";
+import { MOROCCO_CITIES } from "@/lib/moroccan-cities";
+import { NEXA_STAYS_LOGO_SRC } from "@/lib/brand-assets";
 
 const hostStepsFull = [
   "Host Type",
@@ -334,7 +336,6 @@ export default function HostPage() {
 
   // Step 6: Property Basics
   const PROPERTY_TYPES = ["Apartment", "Villa", "Hotel", "Full house", "Studio", "Guesthouse", "Riad", "House", "Chalet", "Other"] as const;
-  const MOROCCO_CITIES = ["Agadir", "Casablanca", "Chefchaouen", "Essaouira", "Fes", "Marrakech", "Meknes", "Ouarzazate", "Rabat", "Tangier", "Taroudant"] as const;
   const [propertyName, setPropertyName] = useState("");
   const [propertyType, setPropertyType] = useState<string>("Apartment");
   const [propertyCity, setPropertyCity] = useState("");
@@ -468,7 +469,7 @@ export default function HostPage() {
     <>
       <Link href={localePath("/")} className="flex items-center gap-2.5 mb-6 lg:mb-10 cursor-pointer hover:opacity-90">
         <div className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0">
-          <Image src="/images/nexastays.png" alt="Nexa Stays" fill sizes="36px" className="object-cover" />
+          <Image src={NEXA_STAYS_LOGO_SRC} alt="Nexa Stays" fill sizes="36px" className="object-cover" />
         </div>
         <span className="font-display text-xl font-bold text-white">{addListingOnly ? "Add Listing" : "Host Setup"}</span>
       </Link>

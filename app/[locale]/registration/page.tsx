@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -9,17 +9,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { completeRegistration } from "@/lib/auth-api";
-import { updateProfile, submitKyc, uploadDocument, uploadSelfie, getCurrentUserOrNull } from "@/lib/kyc-api";
+import {
+  updateProfile,
+  submitKyc,
+  getCurrentUserOrNull,
+  syncSumsubStatus,
+} from "@/lib/kyc-api";
 import { normalizeError } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { validateEmail, validateDateOfBirth } from "@/lib/validators";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { NEXA_STAYS_LOGO_SRC } from "@/lib/brand-assets";
+import { MOROCCO_CITIES } from "@/lib/moroccan-cities";
+import {
+  SumsubWebVerification,
+  type SumsubFinalStatus,
+} from "@/components/kyc/SumsubWebVerification";
 
 const steps = [
   { id: 1, label: "Personal Info" },
-  { id: 2, label: "ID Document" },
-  { id: 3, label: "Selfie" },
-  { id: 4, label: "Done" },
+  { id: 2, label: "Verify" },
+  { id: 3, label: "Result" },
 ];
 
 export default function RegistrationPage() {
@@ -29,8 +39,8 @@ export default function RegistrationPage() {
   const { token, tokenType, isAuthenticated, setAuthJwt } = useAuth();
   const { localePath } = useLanguage();
   const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [step1Submitting, setStep1Submitting] = useState(false);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -39,12 +49,13 @@ export default function RegistrationPage() {
   const [nationality, setNationality] = useState("MA");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [idNumber, setIdNumber] = useState("");
-  const [idType, setIdType] = useState("CNIE");
   const [phone, setPhone] = useState("");
-  const [idFrontFile, setIdFrontFile] = useState<File | null>(null);
-  const [idBackFile, setIdBackFile] = useState<File | null>(null);
-  const [selfieFile, setSelfieFile] = useState<File | null>(null);
-  const [submitted, setSubmitted] = useState(false);
+
+  /** After Sumsub submit: waiting for APPROVED/REJECTED */
+  const [awaitingDecision, setAwaitingDecision] = useState(false);
+  const [finalOutcome, setFinalOutcome] = useState<SumsubFinalStatus | null>(
+    null
+  );
 
   useEffect(() => {
     const p = searchParams.get("phone");
@@ -53,24 +64,39 @@ export default function RegistrationPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && !token && !isAuthenticated) {
-      const regUrl = localePath("/registration") + (redirect ? "?redirect=" + encodeURIComponent(localePath(redirect)) : "");
-      router.push(`${localePath("/login")}?redirect=${encodeURIComponent(regUrl)}`);
+      const regUrl =
+        localePath("/registration") +
+        (redirect
+          ? "?redirect=" + encodeURIComponent(localePath(redirect))
+          : "");
+      router.push(
+        `${localePath("/login")}?redirect=${encodeURIComponent(regUrl)}`
+      );
     }
-  }, [token, isAuthenticated, router, redirect]);
+  }, [token, isAuthenticated, router, redirect, localePath]);
 
   useEffect(() => {
     if (tokenType === "jwt" && token && step === 1) {
       getCurrentUserOrNull(() => token).then((u) => {
-        if (u?.kyc_status === "APPROVED") {
+        const k = (u?.kyc_status || "").toUpperCase();
+        if (k === "APPROVED" || k === "VERIFIED") {
           router.replace(localePath("/"));
         }
       });
     }
-  }, [tokenType, token, step, router]);
+  }, [tokenType, token, step, router, localePath]);
 
   const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
 
-  const handleSubmitKyc = async () => {
+  const exchangeOtpSessionForJwt = useCallback(async () => {
+    if (tokenType !== "otp_session" || !token) return;
+    const result = await completeRegistration(token);
+    if (result?.access_token) {
+      setAuthJwt(result.access_token, result.refresh_token);
+    }
+  }, [tokenType, token, setAuthJwt]);
+
+  const handlePersonalContinue = async () => {
     if (!phone) {
       setError("Phone number is required");
       return;
@@ -91,20 +117,8 @@ export default function RegistrationPage() {
       setError("Full name is required");
       return;
     }
-    if (!idFrontFile) {
-      setError("ID document front is required");
-      return;
-    }
-    if (idType === "CNIE" && !idBackFile) {
-      setError("ID document back is required for CNIE");
-      return;
-    }
-    if (!selfieFile) {
-      setError("Selfie is required");
-      return;
-    }
 
-    setLoading(true);
+    setStep1Submitting(true);
     setError("");
     const getToken = () => token;
     try {
@@ -123,65 +137,102 @@ export default function RegistrationPage() {
         getToken
       );
 
-      await uploadDocument(
-        idFrontFile,
+      await updateProfile(
         {
-          side: "front",
-          document_type: idType,
-          document_country: nationality || "MA",
-          national_id_number: idNumber || undefined,
+          full_name: fullName,
+          email: email || undefined,
+          city: city || undefined,
+          nationality: nationality || undefined,
+          date_of_birth: dateOfBirth || undefined,
         },
         getToken
       );
 
-      if (idBackFile) {
-        await uploadDocument(
-          idBackFile,
-          {
-            side: "back",
-            document_type: idType,
-            document_country: nationality || "MA",
-          },
-          getToken
-        );
-      }
-
-      await uploadSelfie(selfieFile, getToken);
-
-      if (fullName) {
-        await updateProfile(
-          {
-            full_name: fullName,
-            email: email || undefined,
-            city: city || undefined,
-            nationality: nationality || undefined,
-            date_of_birth: dateOfBirth || undefined,
-          },
-          getToken
-        );
-      }
-
-      // Exchange OTP session for JWT. Only when we have OTP token.
-      if (tokenType === "otp_session" && token) {
-        const result = await completeRegistration(token);
-        if (result?.access_token) {
-          setAuthJwt(result.access_token, result.refresh_token);
-        }
-      }
-
-      setSubmitted(true);
-      setStep(4);
+      setFinalOutcome(null);
+      setAwaitingDecision(false);
+      setStep(2);
     } catch (err: unknown) {
       const apiErr = normalizeError(err);
-      setError(apiErr.message || "KYC submission failed");
+      setError(apiErr.message || "Could not save your information");
     } finally {
-      setLoading(false);
+      setStep1Submitting(false);
     }
   };
+
+  const handleSumsubSubmitted = () => {
+    setAwaitingDecision(true);
+    setFinalOutcome(null);
+    setStep(3);
+  };
+
+  const handleSumsubFinalStatus = async (status: SumsubFinalStatus) => {
+    try {
+      await exchangeOtpSessionForJwt();
+    } catch (e: unknown) {
+      const apiErr = normalizeError(e);
+      setError(apiErr.message || "Could not complete registration");
+    }
+    setFinalOutcome(status);
+    setAwaitingDecision(false);
+    setStep(3);
+  };
+
+  /** Poll while waiting on step 3 (widget unmounted). */
+  useEffect(() => {
+    if (step !== 3 || !awaitingDecision || !token) return;
+
+    let cancelled = false;
+
+    const pollOnce = async () => {
+      const tok = token;
+      try {
+        const r = await syncSumsubStatus(() => tok, "STAYS");
+        const u = (r.status || "").toUpperCase();
+        const terminal =
+          u === "APPROVED"
+            ? ("APPROVED" as const)
+            : u === "VERIFIED"
+              ? ("VERIFIED" as const)
+              : u === "REJECTED"
+                ? ("REJECTED" as const)
+                : null;
+        if (!terminal || cancelled) return;
+
+        try {
+          const result = await completeRegistration(tok);
+          if (!cancelled && result?.access_token) {
+            setAuthJwt(result.access_token, result.refresh_token);
+          }
+        } catch {
+          //
+        }
+        if (!cancelled) {
+          setFinalOutcome(terminal);
+          setAwaitingDecision(false);
+        }
+      } catch {
+        //
+      }
+    };
+
+    void pollOnce();
+    const id = setInterval(() => {
+      if (!cancelled) void pollOnce();
+    }, 8000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [step, awaitingDecision, token]);
 
   if (!token) {
     return null;
   }
+
+  const showApproved =
+    finalOutcome === "APPROVED" || finalOutcome === "VERIFIED";
+  const showRejected = finalOutcome === "REJECTED";
 
   return (
     <>
@@ -196,7 +247,7 @@ export default function RegistrationPage() {
             >
               <div className="relative w-11 h-11 rounded-lg overflow-hidden">
                 <Image
-                  src="/images/nexastays.png"
+                  src={NEXA_STAYS_LOGO_SRC}
                   alt="Nexa Stays"
                   fill
                   sizes="120px"
@@ -211,8 +262,8 @@ export default function RegistrationPage() {
               Complete your profile
             </h2>
             <p className="text-white/75 text-base mb-10">
-              Identity verification protects everyone. Your documents will be
-              reviewed by our team — you can browse listings while we verify.
+              Identity verification protects everyone. Complete Sumsub
+              verification — you can browse listings while we finalize review.
             </p>
             <div className="flex flex-col gap-3.5">
               {[
@@ -253,8 +304,8 @@ export default function RegistrationPage() {
                       step > s.id
                         ? "border-nexa-primary bg-nexa-primary text-white"
                         : step === s.id
-                        ? "border-nexa-primary text-nexa-primary border-2 bg-nexa-bg"
-                        : "border-2 border-nexa-line text-nexa-ink-4 bg-nexa-bg"
+                          ? "border-nexa-primary text-nexa-primary border-2 bg-nexa-bg"
+                          : "border-2 border-nexa-line text-nexa-ink-4 bg-nexa-bg"
                     )}
                   >
                     {step > s.id ? "✓" : s.id}
@@ -280,7 +331,7 @@ export default function RegistrationPage() {
                 </h2>
                 <p className="text-nexa-ink-3 text-sm mb-7">
                   Required for identity verification. Same account as Nexa Pay
-                  and Nexa Go.
+                  and Nexa Go. Next step opens Sumsub secure verification.
                 </p>
                 <div className="grid grid-cols-2 gap-3.5 mb-5">
                   <div>
@@ -332,11 +383,18 @@ export default function RegistrationPage() {
                   <label className="block text-sm font-semibold text-nexa-ink-2 mb-2">
                     City
                   </label>
-                  <Input
-                    placeholder="Casablanca"
+                  <select
+                    className="w-full h-11 rounded-xl border-2 border-nexa-line bg-white px-4 py-3 text-sm font-sans text-nexa-ink outline-none focus:border-nexa-primary"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                  />
+                  >
+                    <option value="">Select city</option>
+                    {MOROCCO_CITIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="grid grid-cols-2 gap-3.5 mb-5">
                   <div>
@@ -373,12 +431,17 @@ export default function RegistrationPage() {
                     onChange={(e) => setIdNumber(e.target.value)}
                   />
                 </div>
+                {error && (
+                  <p className="text-red-600 text-sm mb-4" role="alert">
+                    {error}
+                  </p>
+                )}
                 <Button
                   className="w-full justify-center"
-                  onClick={() => setStep(2)}
-                  disabled={!firstName || !lastName}
+                  onClick={() => void handlePersonalContinue()}
+                  disabled={!firstName || !lastName || step1Submitting}
                 >
-                  Continue →
+                  {step1Submitting ? "Saving…" : "Continue →"}
                 </Button>
                 <p className="text-[0.78rem] text-nexa-ink-4 text-center mt-4">
                   You can browse while verification is pending. Booking unlocks
@@ -390,160 +453,113 @@ export default function RegistrationPage() {
             {step === 2 && (
               <div>
                 <h2 className="text-2xl font-semibold mb-2">
-                  ID document
+                  Identity verification
                 </h2>
                 <p className="text-nexa-ink-3 text-sm mb-7">
-                  Upload a clear photo of your ID. For Moroccan CNIE, front and
-                  back required.
+                  Follow the secure Sumsub steps to verify your identity.
                 </p>
-                <div className="mb-5">
-                  <label className="block text-sm font-semibold text-nexa-ink-2 mb-2">
-                    ID Type
-                  </label>
-                  <select
-                    className="w-full h-11 rounded-xl border-2 border-nexa-line bg-white px-4 py-3 text-sm font-sans text-nexa-ink outline-none focus:border-nexa-primary"
-                    value={idType}
-                    onChange={(e) => setIdType(e.target.value)}
-                  >
-                    <option value="CNIE">CNIE (Moroccan ID)</option>
-                    <option value="PASSPORT">Passport</option>
-                    <option value="NATIONAL_ID">National ID</option>
-                  </select>
-                </div>
-                <div className="grid grid-cols-2 gap-3.5 mb-5">
-                  <div>
-                    <label className="block text-sm font-semibold text-nexa-ink-2 mb-2">
-                      ID Front <span className="text-nexa-primary">*</span>
-                    </label>
-                    <div className="border-2 border-dashed border-nexa-line rounded-xl p-5 text-center cursor-pointer hover:border-nexa-primary hover:bg-nexa-primary-soft transition-colors">
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        className="hidden"
-                        id="id-front"
-                        onChange={(e) => setIdFrontFile(e.target.files?.[0] ?? null)}
-                      />
-                      <label
-                        htmlFor="id-front"
-                        className="cursor-pointer block"
-                      >
-                        <div className="text-3xl mb-2">📄</div>
-                        <div className="text-sm text-nexa-ink-4">
-                          {idFrontFile ? idFrontFile.name : "Upload front"}
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-nexa-ink-2 mb-2">
-                      ID Back {idType === "CNIE" && <span className="text-nexa-primary">*</span>}
-                    </label>
-                    <div className="border-2 border-dashed border-nexa-line rounded-xl p-5 text-center cursor-pointer hover:border-nexa-primary hover:bg-nexa-primary-soft transition-colors">
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        className="hidden"
-                        id="id-back"
-                        onChange={(e) => setIdBackFile(e.target.files?.[0] ?? null)}
-                      />
-                      <label htmlFor="id-back" className="cursor-pointer block">
-                        <div className="text-3xl mb-2">📄</div>
-                        <div className="text-sm text-nexa-ink-4">
-                          {idBackFile ? idBackFile.name : "Upload back"}
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <Button
-                    variant="ghost"
-                    className="flex-1"
-                    onClick={() => setStep(1)}
-                  >
-                    ← Back
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    onClick={() => setStep(3)}
-                    disabled={!idFrontFile || (idType === "CNIE" && !idBackFile)}
-                  >
-                    Continue →
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {step === 3 && (
-              <div>
-                <h2 className="text-2xl font-semibold mb-2">Selfie</h2>
-                <p className="text-nexa-ink-3 text-sm mb-7">
-                  A clear photo of your face for verification.
-                </p>
-                <div className="mb-6">
-                  <div className="border-2 border-dashed border-nexa-line rounded-xl p-8 text-center cursor-pointer hover:border-nexa-primary hover:bg-nexa-primary-soft transition-colors">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="hidden"
-                      id="selfie"
-                      onChange={(e) => setSelfieFile(e.target.files?.[0] ?? null)}
-                    />
-                    <label htmlFor="selfie" className="cursor-pointer block">
-                      <div className="text-4xl mb-2">🤳</div>
-                      <div className="text-sm text-nexa-ink-4">
-                        {selfieFile ? selfieFile.name : "Upload selfie"}
-                      </div>
-                    </label>
-                  </div>
-                </div>
                 {error && (
                   <p className="text-red-600 text-sm mb-4" role="alert">
                     {error}
                   </p>
                 )}
-                <div className="flex gap-3">
+                <SumsubWebVerification
+                  getToken={() => token}
+                  applicantEmail={email || undefined}
+                  applicantPhone={phone || undefined}
+                  onSubmitted={() => void handleSumsubSubmitted()}
+                  onFinalStatus={(s) => void handleSumsubFinalStatus(s)}
+                  onError={(msg) => setError(msg)}
+                />
+                <div className="flex gap-3 mt-6">
                   <Button
                     variant="ghost"
                     className="flex-1"
-                    onClick={() => setStep(2)}
+                    onClick={() => {
+                      setError("");
+                      setStep(1);
+                    }}
                   >
                     ← Back
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    onClick={handleSubmitKyc}
-                    disabled={!selfieFile || loading}
-                  >
-                    {loading ? "Submitting…" : "Submit & Finish →"}
                   </Button>
                 </div>
               </div>
             )}
 
-            {step === 4 && submitted && (
+            {step === 3 && awaitingDecision && !finalOutcome && (
               <div className="text-center py-5">
                 <div className="text-5xl mb-4">⏳</div>
                 <h2 className="text-2xl font-semibold mb-2">
                   Verification submitted
                 </h2>
                 <p className="text-nexa-ink-3 text-sm mb-6">
-                  Your documents are under review. They will appear in the Nexa
-                  Stays admin dashboard. You can browse while we verify.
+                  Sumsub is reviewing your submission. This page will update when
+                  a decision is ready. You can keep browsing Nexa Stays in the
+                  meantime.
+                </p>
+                <p className="text-xs text-nexa-ink-4 mb-6">
+                  Checking status every few seconds…
+                </p>
+                {error && (
+                  <p className="text-amber-700 text-sm mb-4" role="alert">
+                    {error}
+                  </p>
+                )}
+                <Button className="w-full justify-center" asChild>
+                  <Link href={localePath(redirect)}>Browse Stays →</Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-center mt-2.5"
+                  asChild
+                >
+                  <Link href={localePath("/")}>Go to Home</Link>
+                </Button>
+              </div>
+            )}
+
+            {step === 3 && showApproved && (
+              <div className="text-center py-5">
+                <div className="text-5xl mb-4">✅</div>
+                <h2 className="text-2xl font-semibold mb-2">
+                  Verification approved
+                </h2>
+                <p className="text-nexa-ink-3 text-sm mb-6">
+                  Your identity is verified. You can book stays on Nexa Stays.
                 </p>
                 <div className="flex flex-col gap-2.5 mb-6 text-left">
                   <div className="flex items-center gap-2.5 py-3 px-4 rounded-xl text-sm bg-green-50 text-green-800">
                     ✅ Browse listings
                   </div>
                   <div className="flex items-center gap-2.5 py-3 px-4 rounded-xl text-sm bg-green-50 text-green-800">
-                    ✅ Save favorites
-                  </div>
-                  <div className="flex items-center gap-2.5 py-3 px-4 rounded-xl text-sm bg-nexa-bg-2 text-nexa-ink-4">
-                    🔒 Book stays — unlocks after approval
+                    ✅ Book stays
                   </div>
                 </div>
                 <Button className="w-full justify-center" asChild>
                   <Link href={localePath(redirect)}>Browse Stays →</Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-center mt-2.5"
+                  asChild
+                >
+                  <Link href={localePath("/")}>Go to Home</Link>
+                </Button>
+              </div>
+            )}
+
+            {step === 3 && showRejected && (
+              <div className="text-center py-5">
+                <div className="text-5xl mb-4">❌</div>
+                <h2 className="text-2xl font-semibold mb-2">
+                  Verification not approved
+                </h2>
+                <p className="text-nexa-ink-3 text-sm mb-6">
+                  We couldn&apos;t approve your verification this time. Check
+                  your email or contact support if you need help.
+                </p>
+                <Button className="w-full justify-center" asChild>
+                  <Link href={localePath("/profile")}>Go to Profile</Link>
                 </Button>
                 <Button
                   variant="ghost"

@@ -131,7 +131,13 @@
     "copyright": "© 2026 Nexa. Tous droits réservés.",
     "secured": "Sécurisé par Nexa. Opéré par Nexa.",
     "customerRelations": "Relations clients",
-    "investments": "Investissements"
+    "investments": "Investissements",
+    "disclaimer": "Nexa Stays est une plateforme de réservation de séjours au Maroc. Les fonctionnalités, tarifs et disponibilités peuvent évoluer. L'utilisation du service est soumise à nos Conditions et à notre Politique de confidentialité.",
+    "rightsReserved": "Tous droits réservés.",
+    "contactLabel": "Contact",
+    "social": "Réseaux sociaux",
+    "instagramJoinNexa": "@joinnexa",
+    "instagramNexaStays": "@nexastays.ma"
   },
   "login": {
     "title": "Entrez votre numéro",

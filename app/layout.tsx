@@ -2,19 +2,15 @@ import React from "react";
 import type { Metadata } from "next";
 import { Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
+import { NEXA_STAYS_LOGO_SRC } from "@/lib/brand-assets";
 
 export const metadata: Metadata = {
   title: "Nexa Stays — Book Stays in Morocco with Real Trust",
   description:
     "Verified people. Verified properties. Clear check-ins. Book stays in Morocco with real trust.",
   icons: {
-    icon: [
-      {
-        url: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=32&q=80",
-        sizes: "32x32",
-        type: "image/jpeg",
-      },
-    ],
+    icon: [{ url: NEXA_STAYS_LOGO_SRC, type: "image/png" }],
+    apple: [{ url: NEXA_STAYS_LOGO_SRC, type: "image/png" }],
   },
 };
 

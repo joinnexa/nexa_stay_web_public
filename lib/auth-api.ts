@@ -42,6 +42,18 @@ export async function sendOtp(phone_number: string): Promise<{ sent: boolean }> 
   return res.data?.data ?? res.data ?? { sent: true };
 }
 
+/** Nexa unified profile snippet returned from OTP verify (same phone across apps). */
+export interface NexaProfileSnippet {
+  exists?: boolean;
+  full_name?: string | null;
+  email?: string | null;
+  date_of_birth?: string | null;
+  city?: string | null;
+  kyc_status?: string;
+  identity_verified?: boolean;
+  linked_services?: string[];
+}
+
 /** Verify OTP; returns access_token for sign-in, or otp_session_token for new users to set PIN */
 export async function verifyOtp(
   phone_number: string,
@@ -49,20 +61,24 @@ export async function verifyOtp(
 ): Promise<{
   verified: boolean;
   otp_session_token?: string;
+  identity_session_token?: string;
   access_token?: string;
   refresh_token?: string;
   user_id?: string;
   accounts?: Array<{ id: string; account_type: string }>;
+  nexa_profile?: NexaProfileSnippet;
 }> {
   const res = await client.post("/auth/otp/verify", { phone_number, otp });
   const raw = res.data?.data ?? res.data ?? {};
   return {
     verified: !!raw.verified,
     otp_session_token: raw.otp_session_token,
+    identity_session_token: raw.identity_session_token,
     access_token: raw.access_token,
     refresh_token: raw.refresh_token,
     user_id: raw.user_id,
     accounts: raw.accounts,
+    nexa_profile: raw.nexa_profile as NexaProfileSnippet | undefined,
   };
 }
 

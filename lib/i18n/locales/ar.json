@@ -131,7 +131,13 @@
     "copyright": "© 2026 Nexa. جميع الحقوق محفوظة.",
     "secured": "مؤمّن من Nexa. تشغيل بواسطة Nexa.",
     "customerRelations": "علاقات العملاء",
-    "investments": "الاستثمارات"
+    "investments": "الاستثمارات",
+    "disclaimer": "Nexa Stays منصة لحجز الإقامات في المغرب. قد تتغيّر الميزات والرسوم والتوافر. استخدام الخدمة يخضع لشروطنا وسياسة الخصوصية.",
+    "rightsReserved": "جميع الحقوق محفوظة.",
+    "contactLabel": "اتصل بنا",
+    "social": "وسائل التواصل",
+    "instagramJoinNexa": "@joinnexa",
+    "instagramNexaStays": "@nexastays.ma"
   },
   "login": {
     "title": "أدخل رقم هاتفك",

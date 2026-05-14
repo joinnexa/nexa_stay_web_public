@@ -1,97 +1,186 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Instagram } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { NEXA_STAYS_LOGO_SRC } from "@/lib/brand-assets";
+
+const CONTACT_EMAILS = [
+  "contact@joinnexa.ma",
+  "support@joinnexa.ma",
+  "partnerships@joinnexa.ma",
+] as const;
+
+const INSTAGRAM_LINKS = [
+  {
+    href: "https://www.instagram.com/joinnexa/",
+    labelKey: "instagramJoinNexa" as const,
+  },
+  {
+    href: "https://www.instagram.com/nexastays.ma/",
+    labelKey: "instagramNexaStays" as const,
+  },
+] as const;
+
+const linkClass =
+  "text-sm text-white/75 transition hover:text-white";
 
 export const Footer = () => {
-  const { t, localePath } = useLanguage();
+  const { t, localePath, isRtl } = useLanguage();
+  const year = new Date().getFullYear();
+  const textStart = isRtl ? "text-right" : "text-left";
+
   return (
-    <footer className="bg-nexa-ink text-white/70 py-12 sm:py-16">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-8 sm:gap-10 lg:gap-12 pb-10 sm:pb-12 border-b border-white/10">
-          <div>
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="relative w-9 h-9 rounded-lg overflow-hidden">
-                <Image
-                  src="/images/nexastays.png"
-                  alt="Nexa Stays"
-                  fill
-                  sizes="36px"
-                  className="object-cover"
-                />
-              </div>
-              <span className="font-display text-xl font-bold text-white">
-                Nexa Stays
-              </span>
+    <footer className="relative border-t border-nexa-ink-2 bg-nexa-ink text-white">
+      <div className="mx-auto max-w-6xl px-6 py-16">
+        <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+          <div className="flex items-center gap-3">
+            <Image
+              src={NEXA_STAYS_LOGO_SRC}
+              alt="Nexa Stays"
+              width={48}
+              height={48}
+              className="h-12 w-12 shrink-0 object-contain"
+            />
+            <div>
+              <div className="text-lg font-semibold text-white">Nexa Stays</div>
+              <div className="text-sm text-nexa-ink-4">{t("footer.tagline")}</div>
             </div>
-            <p className="text-sm leading-relaxed max-w-[280px]">
-              {t("footer.tagline")}
-            </p>
-            <div className="mt-5">
-              <a
-                href="tel:+212690283339"
-                className="block text-nexa-primary-light text-sm mb-1.5 hover:underline"
-              >
-                📞 +212 6 9028 3339 — {t("footer.customerRelations")}
-              </a>
-              <a
-                href="tel:+79955582175"
-                className="block text-nexa-primary-light text-sm hover:underline"
-              >
-                📞 +7 995 558-21-75 — {t("footer.investments")}
-              </a>
-            </div>
-          </div>
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-white mb-5 font-sans">
-              {t("footer.platform")}
-            </h4>
-            <Link href={localePath("/listings")} className="block text-sm mb-2.5 hover:text-nexa-primary-light transition-colors">
-              {t("nav.stays")}
-            </Link>
-            <Link href={localePath("/host")} className="block text-sm mb-2.5 hover:text-nexa-primary-light transition-colors">
-              {t("nav.becomeHost")}
-            </Link>
-            <Link href={localePath("/login")} className="block text-sm mb-2.5 hover:text-nexa-primary-light transition-colors">
-              {t("common.signIn")}
-            </Link>
-            <Link href={localePath("/fees")} className="block text-sm mb-2.5 hover:text-nexa-primary-light transition-colors">
-              {t("footer.fees")}
-            </Link>
-          </div>
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-white mb-5 font-sans">
-              {t("footer.company")}
-            </h4>
-            <Link href={localePath("/about")} className="block text-sm mb-2.5 hover:text-nexa-primary-light transition-colors">
-              {t("footer.aboutUs")}
-            </Link>
-            <Link href={localePath("/contact")} className="block text-sm mb-2.5 hover:text-nexa-primary-light transition-colors">
-              {t("nav.contact")}
-            </Link>
-          </div>
-          <div>
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-white mb-5 font-sans">
-              {t("footer.legal")}
-            </h4>
-            <Link href={localePath("/terms")} className="block text-sm mb-2.5 hover:text-nexa-primary-light transition-colors">
-              {t("footer.terms")}
-            </Link>
-            <Link href={localePath("/privacy")} className="block text-sm mb-2.5 hover:text-nexa-primary-light transition-colors">
-              {t("footer.privacy")}
-            </Link>
-            <Link href={localePath("/refund")} className="block text-sm mb-2.5 hover:text-nexa-primary-light transition-colors">
-              {t("footer.refund")}
-            </Link>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 sm:pt-7 text-sm text-center sm:text-left">
-          <p className="text-white/40">{t("footer.copyright")}</p>
-          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-1.5 text-white/50 text-sm">
-            {t("footer.secured")}
+
+        <p
+          className={`mt-8 max-w-3xl text-xs leading-relaxed text-nexa-ink-4 ${textStart}`}
+        >
+          {t("footer.disclaimer")}
+        </p>
+
+        <div className="mt-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-white/95">
+              {t("footer.platform")}
+            </h3>
+            <ul className={`mt-3 space-y-2 ${textStart}`}>
+              <li>
+                <Link href={localePath("/listings")} className={linkClass}>
+                  {t("nav.stays")}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath("/host")} className={linkClass}>
+                  {t("nav.becomeHost")}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath("/login")} className={linkClass}>
+                  {t("common.signIn")}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath("/fees")} className={linkClass}>
+                  {t("footer.fees")}
+                </Link>
+              </li>
+            </ul>
           </div>
+
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-white/95">
+              {t("footer.company")}
+            </h3>
+            <ul className={`mt-3 space-y-2 ${textStart}`}>
+              <li>
+                <Link href={localePath("/about")} className={linkClass}>
+                  {t("footer.aboutUs")}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath("/contact")} className={linkClass}>
+                  {t("nav.contact")}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-white/95">
+              {t("footer.legal")}
+            </h3>
+            <ul className={`mt-3 space-y-2 ${textStart}`}>
+              <li>
+                <Link href={localePath("/terms")} className={linkClass}>
+                  {t("footer.terms")}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath("/privacy")} className={linkClass}>
+                  {t("footer.privacy")}
+                </Link>
+              </li>
+              <li>
+                <Link href={localePath("/refund")} className={linkClass}>
+                  {t("footer.refund")}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-white/95">
+              {t("footer.contactLabel")}
+            </h3>
+            <ul className={`mt-3 space-y-2 ${textStart}`}>
+              {CONTACT_EMAILS.map((email) => (
+                <li key={email}>
+                  <a
+                    href={`mailto:${email}`}
+                    className={`block break-all ${linkClass}`}
+                  >
+                    {email}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-10">
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-white/95">
+            {t("footer.social")}
+          </h3>
+          <ul
+            className={`mt-3 flex flex-wrap gap-4 ${isRtl ? "justify-end" : "justify-start"}`}
+          >
+            {INSTAGRAM_LINKS.map(({ href, labelKey }) => (
+              <li key={href}>
+                <Link
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-white/75 transition hover:text-white"
+                >
+                  <Instagram className="h-4 w-4 shrink-0" aria-hidden />
+                  <span>{t(`footer.${labelKey}`)}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div
+          className={`mt-12 flex flex-col gap-3 border-t border-nexa-ink-2 pt-8 text-xs text-nexa-ink-4 sm:flex-row sm:items-center sm:justify-between ${
+            isRtl ? "sm:flex-row-reverse" : ""
+          }`}
+        >
+          <p>{t("footer.secured")}</p>
+          <p
+            className={
+              isRtl ? "text-right sm:text-left" : "text-left sm:text-right"
+            }
+          >
+            © {year} Nexa — Morocco · {t("footer.rightsReserved")}
+          </p>
         </div>
       </div>
     </footer>
