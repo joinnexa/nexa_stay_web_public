@@ -80,7 +80,7 @@ export function getLocalPhonePart(value: string): string {
 
 /**
  * Normalize Moroccan phone to E.164 (+212612345677).
- * Accepts: 0612345677, 612345677, 212612345677, +212612345677
+ * Accepts: 0612345677, 612345677, 212612345677, +212612345677, +2120612345678
  */
 export function normalizeMoroccanPhone(value: string): string {
   const digits = value.replace(/\D/g, "");
@@ -88,14 +88,20 @@ export function normalizeMoroccanPhone(value: string): string {
   let local = digits;
   if (local.startsWith("212")) {
     local = local.slice(3);
-  } else if (local.startsWith("0")) {
+  }
+  if (local.startsWith("0")) {
     local = local.slice(1);
   }
   // Morocco mobile: 6XX XXX XXX (9 digits)
-  if (local.length >= 9 && local.startsWith("6")) {
-    return `${MOROCCO_PREFIX}${local.slice(0, 9)}`;
+  let out =
+    local.length >= 9 && local.startsWith("6")
+      ? `${MOROCCO_PREFIX}${local.slice(0, 9)}`
+      : `${MOROCCO_PREFIX}${local}`;
+  // +2120612345678 (national 0 after country code) → +212612345678
+  if (/^\+2120\d{9}$/.test(out)) {
+    out = `${MOROCCO_PREFIX}${out.slice(5)}`;
   }
-  return `${MOROCCO_PREFIX}${local}`;
+  return out;
 }
 
 /** Validate phone number (accepts 06..., 6..., 212..., +212..., normalizes before check) */

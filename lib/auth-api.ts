@@ -4,6 +4,7 @@
  */
 
 import axios, { type InternalAxiosRequestConfig } from "axios";
+import { normalizeMoroccanPhone } from "./validators";
 
 type RequestConfigWithRetry = InternalAxiosRequestConfig & { __retryCount?: number };
 
@@ -36,9 +37,15 @@ client.interceptors.response.use(
   }
 );
 
+function apiPhone(phone_number: string): string {
+  return normalizeMoroccanPhone(phone_number);
+}
+
 /** Send OTP to phone */
 export async function sendOtp(phone_number: string): Promise<{ sent: boolean }> {
-  const res = await client.post("/auth/otp/send", { phone_number });
+  const res = await client.post("/auth/otp/send", {
+    phone_number: apiPhone(phone_number),
+  });
   return res.data?.data ?? res.data ?? { sent: true };
 }
 
@@ -68,7 +75,10 @@ export async function verifyOtp(
   accounts?: Array<{ id: string; account_type: string }>;
   nexa_profile?: NexaProfileSnippet;
 }> {
-  const res = await client.post("/auth/otp/verify", { phone_number, otp });
+  const res = await client.post("/auth/otp/verify", {
+    phone_number: apiPhone(phone_number),
+    otp,
+  });
   const raw = res.data?.data ?? res.data ?? {};
   return {
     verified: !!raw.verified,
@@ -141,7 +151,7 @@ export async function verifyPin(
   account_type: string = "CONSUMER"
 ): Promise<{ verified: boolean; access_token?: string; user_id?: string }> {
   const res = await client.post("/auth/verify-pin", {
-    phone_number,
+    phone_number: apiPhone(phone_number),
     pin,
     account_type,
   });

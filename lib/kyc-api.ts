@@ -7,7 +7,7 @@ import axios from "axios";
 import { getApiBaseUrl } from "./env";
 import { unwrapResponse } from "./api-client";
 import { normalizeError } from "./api-client";
-import { validateImageFile } from "./validators";
+import { normalizeMoroccanPhone, validateImageFile } from "./validators";
 
 const API_BASE = getApiBaseUrl();
 
@@ -109,12 +109,16 @@ export async function submitKyc(
   },
   getToken: () => string | null
 ): Promise<unknown> {
-  const res = await jsonClient.post("/kyc/submit", data, {
-    headers: {
-      ...getAuthHeaders(getToken),
-      "X-Nexa-Product": "STAYS",
-    },
-  });
+  const res = await jsonClient.post(
+    "/kyc/submit",
+    { ...data, phone_number: normalizeMoroccanPhone(data.phone_number) },
+    {
+      headers: {
+        ...getAuthHeaders(getToken),
+        "X-Nexa-Product": "STAYS",
+      },
+    }
+  );
   return unwrapResponse(res) ?? res.data;
 }
 
@@ -219,10 +223,15 @@ export async function changePhone(
   data: { current_otp: string; new_phone_number: string; new_otp: string },
   getJwt: () => string | null
 ): Promise<{ phone_number: string }> {
-  const res = await jsonClient.post("/users/me/change-phone", data, {
-    headers: getAuthHeaders(getJwt),
-  });
-  return (unwrapResponse(res) ?? res.data) ?? { phone_number: data.new_phone_number };
+  const newPhone = normalizeMoroccanPhone(data.new_phone_number);
+  const res = await jsonClient.post(
+    "/users/me/change-phone",
+    { ...data, new_phone_number: newPhone },
+    {
+      headers: getAuthHeaders(getJwt),
+    }
+  );
+  return (unwrapResponse(res) ?? res.data) ?? { phone_number: newPhone };
 }
 
 /** Upload profile photo - requires JWT. Max 5MB, jpg/png. */
