@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -58,25 +59,16 @@ export const HowItWorksSection = () => {
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="rounded-2xl sm:rounded-[32px] overflow-hidden shadow-nexa-lg h-[320px] sm:h-[400px] lg:h-[480px] relative min-h-[280px]"
+            className="rounded-2xl sm:rounded-[32px] shadow-nexa-lg h-[320px] sm:h-[400px] lg:h-[520px] relative min-h-[280px] isolate"
           >
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{
-                backgroundImage:
-                  "url('https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=700&q=80')",
-              }}
-            />
-            <div className="absolute bottom-6 left-6 right-6 bg-[rgba(253,251,252,0.95)] backdrop-blur-md rounded-xl p-5 px-6 flex items-center gap-3 shadow-nexa-md">
-              <div className="w-10 h-10 rounded-full bg-nexa-primary-soft flex items-center justify-center text-nexa-primary font-bold">
-                ✓
-              </div>
-              <div>
-                <div className="font-bold text-sm">{t("home.howItWorks.checkinConfirmed")}</div>
-                <div className="text-xs text-nexa-ink-3">
-                  {t("home.howItWorks.contactShared")}
-                </div>
-              </div>
+            <div className="absolute inset-0 overflow-hidden rounded-2xl sm:rounded-[32px] bg-white">
+              <Image
+                src="/images/assets/how-it-works.png"
+                alt={t("home.howItWorks.eyebrow")}
+                fill
+                sizes="(max-width: 1024px) 100vw, 640px"
+                className="object-contain object-center rounded-2xl sm:rounded-[32px]"
+              />
             </div>
           </motion.div>
         </div>

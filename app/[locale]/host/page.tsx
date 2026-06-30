@@ -754,7 +754,7 @@ export default function HostPage() {
                   try {
                     const res = await submitHostVerification({ use_existing_kyc: true }, token);
                     setHostStatus(res);
-                    if (res.status === "APPROVED") setStep(5);
+                    if (res.status === "APPROVED" || res.status === "PENDING") setStep(5);
                   } catch (e) {
                     setHostError(e instanceof Error ? e.message : "Application failed");
                   } finally {

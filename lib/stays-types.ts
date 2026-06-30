@@ -98,10 +98,48 @@ export interface StaysBooking {
 
 export interface HostVerificationStatus {
   status: "NOT_STARTED" | "PENDING" | "APPROVED" | "REJECTED";
+  application_status?: string;
+  identity_status?: string;
   message?: string;
   submitted_at?: string | null;
   reviewed_at?: string | null;
   rejection_reason?: string | null;
+}
+
+export interface HostMeStatus {
+  is_host: boolean;
+  host_user_id?: string | null;
+  profile_id?: string | null;
+  application_status: string;
+  identity_status: string;
+  host_verification_status: string;
+  can_create_listing: boolean;
+  can_publish_listing: boolean;
+  rejection_reason?: string | null;
+  submitted_at?: string | null;
+  reviewed_at?: string | null;
+  source?: string | null;
+  submitted_from?: string | null;
+}
+
+export interface SubmitHostOnboardingBody {
+  full_name?: string;
+  phone?: string;
+  email?: string;
+  city?: string;
+  host_type?: string;
+  source?: "MOBILE" | "WEB" | "ADMIN" | "UNKNOWN";
+  submitted_from?: string;
+  use_existing_kyc?: boolean;
+  hosting_policies_accepted?: boolean;
+  identity_reused?: boolean;
+  sumsub_applicant_id?: string;
+  identity_status?: string;
+  document_type?: string;
+  document_number_hash?: string;
+  document_front_asset_id?: string;
+  document_back_asset_id?: string;
+  selfie_asset_id?: string;
 }
 
 export interface SubmitHostVerificationBody {

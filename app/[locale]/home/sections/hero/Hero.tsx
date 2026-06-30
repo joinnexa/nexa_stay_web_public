@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -77,13 +78,17 @@ export const HeroSection = () => {
           className="relative w-full max-w-[340px] h-[360px] sm:h-[400px] md:h-[420px] mx-auto"
         >
           <div className="absolute inset-0 bg-white rounded-[22px] shadow-nexa-lg overflow-hidden">
-            <div
-              className="h-[70%] bg-cover bg-center"
-              style={{
-                backgroundImage:
-                  "url('https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=600&q=80')",
-              }}
-            />
+            <div className="relative h-[70%] w-full bg-nexa-ink-4/10">
+              <Image
+                src="/images/assets/rooftop-riad.jpg"
+                alt="Rooftop Riad Escape"
+                fill
+                priority
+                sizes="(max-width: 768px) 90vw, 340px"
+                className="object-cover"
+                style={{ objectPosition: "center 42%" }}
+              />
+            </div>
             <div className="p-4">
               <h4 className="font-display text-base font-semibold mb-1 flex justify-between">
                 Rooftop Riad Escape{" "}

@@ -15,6 +15,8 @@ import type {
   CreateBookingDto,
   StaysBooking,
   HostVerificationStatus,
+  HostMeStatus,
+  SubmitHostOnboardingBody,
   SubmitHostVerificationBody,
   HostListingSummary,
   HostBooking,
@@ -312,6 +314,25 @@ export async function uploadListingWalkthrough(
   return unwrap<{ asset_id: string }>(res);
 }
 
+/** Unified host onboarding status (requires JWT) */
+export async function getHostMe(token?: string | null): Promise<HostMeStatus> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const res = await client.get("/stays/host/me", { headers }).catch(handleError);
+  return unwrap<HostMeStatus>(res);
+}
+
+/** Submit unified host onboarding (requires JWT) */
+export async function submitHostOnboarding(
+  body: SubmitHostOnboardingBody,
+  token?: string | null
+): Promise<HostVerificationStatus> {
+  const headers = token ? { Authorization: `Bearer ${token}` } : getAuthHeaders();
+  const res = await client
+    .post("/stays/host/onboarding", body, { headers })
+    .catch(handleError);
+  return unwrap<HostVerificationStatus>(res);
+}
+
 /** Get host verification status (requires JWT) */
 export async function getHostVerification(
   token?: string | null
@@ -398,7 +419,9 @@ export const staysApi = {
   getListing,
   createBooking,
   getBooking,
+  getHostMe,
   getHostVerification,
+  submitHostOnboarding,
   getHostListings,
   createHostListing,
   uploadListingPhoto,

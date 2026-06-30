@@ -6,13 +6,14 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { DESTINATION_IMAGES } from "@/lib/destination-assets";
 
 const destinations = [
-  { img: "https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=600&q=80", titleKey: "home.destinations.marrakech", subtitleKey: "home.destinations.marrakechSub", span: 2 },
-  { img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80", titleKey: "home.destinations.agadir", subtitleKey: "home.destinations.agadirSub", span: 1 },
-  { img: "https://images.unsplash.com/photo-1533105079780-92b9be482077?w=600&q=80", titleKey: "home.destinations.tangier", subtitleKey: "home.destinations.tangierSub", span: 1 },
-  { img: "https://images.unsplash.com/photo-1580281657527-47f249e8f4df?w=600&q=80", titleKey: "home.destinations.casablanca", subtitleKey: "home.destinations.casablancaSub", span: 1 },
-  { img: "https://images.unsplash.com/photo-1549877452-9c387954fbc2?w=600&q=80", titleKey: "home.destinations.fes", subtitleKey: "home.destinations.fesSub", span: 1 },
+  { img: DESTINATION_IMAGES.marrakech, titleKey: "home.destinations.marrakech", subtitleKey: "home.destinations.marrakechSub", span: 2 },
+  { img: DESTINATION_IMAGES.agadir, titleKey: "home.destinations.agadir", subtitleKey: "home.destinations.agadirSub", span: 1 },
+  { img: DESTINATION_IMAGES.tangier, titleKey: "home.destinations.tangier", subtitleKey: "home.destinations.tangierSub", span: 1 },
+  { img: DESTINATION_IMAGES.casablanca, titleKey: "home.destinations.casablanca", subtitleKey: "home.destinations.casablancaSub", span: 1 },
+  { img: DESTINATION_IMAGES.fes, titleKey: "home.destinations.fes", subtitleKey: "home.destinations.fesSub", span: 1 },
 ];
 
 export const DestinationsSection = () => {

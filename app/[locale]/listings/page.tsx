@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { NavBar } from "@/components/navbar/NavBar";
 import { Footer } from "@/components/footer/Footer";
 import { Button } from "@/components/ui/button";
@@ -13,23 +14,7 @@ import { searchListings, getListingMediaUrl } from "@/lib/stays-api";
 import { ListingImageGallery } from "@/components/listing/ListingImageGallery";
 import type { StaysListing } from "@/lib/stays-types";
 import { MOROCCO_CITIES } from "@/lib/moroccan-cities";
-
-const vibeKeys = [
-  "listings.rooftopSunsets",
-  "listings.riadMagic",
-  "listings.oceanView",
-  "listings.cozyQuiet",
-  "listings.luxuryMinimal",
-  "listings.familyReady",
-];
-const vibeImgs = [
-  "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=300&q=70",
-  "https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=300&q=70",
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&q=70",
-  "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&q=70",
-  "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&q=70",
-  "https://images.unsplash.com/photo-1585155770447-2f66e2a397b5?w=300&q=70",
-];
+import { VIBE_CARDS } from "@/lib/vibe-assets";
 
 const placeholderImg = "https://images.unsplash.com/photo-1539020140153-e479b8c22e70?w=400&q=80";
 
@@ -301,21 +286,26 @@ export default function ListingsPage() {
                 </p>
               </div>
               <div className="flex gap-3 overflow-x-auto pb-1 mb-7 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {vibeKeys.map((labelKey, idx) => (
+                {VIBE_CARDS.map((vibe) => (
                   <div
-                    key={labelKey}
-                    className="shrink-0 w-[140px] h-20 rounded-xl overflow-hidden relative cursor-pointer hover:scale-[1.02] transition-transform"
+                    key={vibe.id}
+                    className="group shrink-0 w-[148px] h-[88px] rounded-xl overflow-hidden relative cursor-pointer hover:scale-[1.02] transition-transform shadow-sm"
                   >
+                    <Image
+                      src={vibe.src}
+                      alt={t(vibe.labelKey)}
+                      fill
+                      sizes="148px"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      style={{ objectPosition: vibe.objectPosition }}
+                    />
                     <div
-                      className="w-full h-full flex items-end p-2.5 bg-cover bg-center"
-                      style={{
-                        backgroundImage: `linear-gradient(180deg,rgba(0,0,0,0.1),rgba(0,0,0,0.5)),url('${vibeImgs[idx]}')`,
-                      }}
-                    >
-                      <span className="text-white text-[0.78rem] font-bold drop-shadow">
-                        {t(labelKey)}
-                      </span>
-                    </div>
+                      className="absolute inset-0 bg-gradient-to-t from-nexa-ink/75 via-nexa-ink/25 to-transparent"
+                      aria-hidden
+                    />
+                    <span className="absolute bottom-2.5 left-2.5 right-2.5 text-white text-[0.78rem] font-bold leading-tight drop-shadow-md">
+                      {t(vibe.labelKey)}
+                    </span>
                   </div>
                 ))}
               </div>
